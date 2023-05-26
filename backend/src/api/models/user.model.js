@@ -1,11 +1,7 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true,
-  },
-  lastName: {
+  name: {
     type: String,
     required: true,
   },
@@ -14,7 +10,6 @@ const UserSchema = new mongoose.Schema({
     required: true, 
     unique: true, 
     match: /^\S+@\S+\.\S+$/, 
-    immutable: true 
   },
   password: {
     type: String,
