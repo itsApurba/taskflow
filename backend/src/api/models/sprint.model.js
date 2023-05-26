@@ -7,15 +7,16 @@ const SprintSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
-    required: true,
+    // required: true,
+    default: Date.now,
   },
   endDate: {
     type: Date,
-    required: true,
+    // required: true,
   },
   tasks: [
     {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
     },
   ],
