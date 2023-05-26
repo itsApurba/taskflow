@@ -10,16 +10,13 @@ const TaskSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ["bug", "feature", "story"],
-    required: true,
   },
   description: {
     type: String,
-    required: true,
   },
   assignee: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
   status: {
     type: String,
