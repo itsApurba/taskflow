@@ -1,7 +1,7 @@
-const axios = require("axios");
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://your-api-url",
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   timeout: 5000,
 });
 
