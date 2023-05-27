@@ -75,6 +75,22 @@ exports.updateTaskStatus = async (req, res) => {
     res.status(400).send(error);
   }
 };
+exports.updateTaskType = async (req, res) => {
+  const { type } = req.body;
+  const body = { type };
+  try {
+    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      // runValidators: true,
+    });
+    if (!task) {
+      return res.status(404).send({ message: "Task not found" });
+    }
+    res.status(200).send(task);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
 
 exports.assignTask = async (req, res) => {
   const userId = req.params.id;

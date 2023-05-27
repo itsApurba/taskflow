@@ -26,7 +26,7 @@ const CreateTask = () => {
         validationSchema={TaskSchema}
         onSubmit={async (values, { resetForm }) => {
           await api.post("/tasks", values);
-          resetForm();
+          // resetForm();
         }}
       >
         {({ isSubmitting, errors, touched }) => (
