@@ -1,15 +1,27 @@
-import React, { useLayoutEffect } from "react";
+import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Box, Button, FormControl, FormLabel, Input, FormErrorMessage, Select, VStack, useColorModeValue, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  FormErrorMessage,
+  Select,
+  VStack,
+  useColorModeValue,
+  useToast,
+} from "@chakra-ui/react";
 import api from "../api/api";
 import { useParams, useLocation } from "react-router-dom";
+import AssignTaskField from "./AssignTaskField";
 
 const TaskSchema = Yup.object().shape({
   title: Yup.string().required("Required").min(1, "Min 1").max(50, "Max 50"),
   type: Yup.string().oneOf(["bug", "feature", "story"], "Invalid task type").required("Required"),
   description: Yup.string().default("").min(1, "Min 1").max(500, "Max 500"),
-  // assignee: Yup.string().default(""),
+  assignee: Yup.string(),
   status: Yup.string().oneOf(["not started", "in progress", "completed", "closed"]).default("not started"),
 });
 
@@ -21,7 +33,7 @@ const CreateTask = () => {
     title: state?.task.title || "",
     type: state?.task.type || "",
     description: state?.task.description || "",
-    // assignee: "",
+    assignee: "",
     status: state?.task.status || "not started",
   };
 
@@ -48,7 +60,7 @@ const CreateTask = () => {
               title: "Something went wrong",
               status: "error",
               position: "top",
-            })
+            });
           }
         }}
       >
@@ -84,13 +96,7 @@ const CreateTask = () => {
                 </FormErrorMessage>
               </FormControl>
 
-              {/* <FormControl isInvalid={errors.assignee && touched.assignee}>
-                <FormLabel>Assignee</FormLabel>
-                <Field as={Input} type='text' name='assignee' />
-                <FormErrorMessage component='div'>
-                  <ErrorMessage name='assignee' />
-                </FormErrorMessage>
-              </FormControl> */}
+              <AssignTaskField name='assignee' />
 
               <FormControl isInvalid={errors.status && touched.status}>
                 <FormLabel>Status</FormLabel>
