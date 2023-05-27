@@ -21,8 +21,10 @@ import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import React from "react";
 import api from "../api/api";
 import { useMutation } from "@tanstack/react-query";
+import {useNavigate} from 'react-router-dom'
 
 const TaskCard = ({ task, refetch }) => {
+  const navigate = useNavigate()  
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
 
@@ -55,7 +57,12 @@ const TaskCard = ({ task, refetch }) => {
   };
 
   const handleEdit = () => {
-    console.log(task);
+    navigate(`/task/${task._id}`,{
+      state: {
+        task
+      },
+    });
+    // console.log(task);
   };
   return (
     <SimpleGrid my={4}>

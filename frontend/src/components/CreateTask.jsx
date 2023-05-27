@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Box, Button, FormControl, FormLabel, Input, FormErrorMessage, Select, VStack, useColorModeValue } from "@chakra-ui/react";
+import { Box, Button, FormControl, FormLabel, Input, FormErrorMessage, Select, VStack, useColorModeValue, useToast } from "@chakra-ui/react";
 import api from "../api/api";
+import { useParams, useLocation } from "react-router-dom";
 
 const TaskSchema = Yup.object().shape({
   title: Yup.string().required("Required").min(1, "Min 1").max(50, "Max 50"),
@@ -13,20 +14,42 @@ const TaskSchema = Yup.object().shape({
 });
 
 const CreateTask = () => {
+  const { id } = useParams();
+  const { state } = useLocation();
+  const toast = useToast();
+  const initValue = {
+    title: state?.task.title || "",
+    type: state?.task.type || "",
+    description: state?.task.description || "",
+    // assignee: "",
+    status: state?.task.status || "not started",
+  };
+
   return (
     <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
       <Formik
-        initialValues={{
-          title: "",
-          type: "",
-          description: "",
-          // assignee: "",
-          status: "not started",
-        }}
+        initialValues={initValue}
         validationSchema={TaskSchema}
         onSubmit={async (values, { resetForm }) => {
-          await api.post("/tasks", values);
-          // resetForm();
+          try {
+            if (!id) {
+              await api.post("/tasks", values);
+            } else {
+              await api.patch(`/tasks/${id}`, values);
+            }
+            toast({
+              title: "Success!",
+              status: "success",
+              position: "top",
+            });
+            // resetForm();
+          } catch (error) {
+            toast({
+              title: "Something went wrong",
+              status: "error",
+              position: "top",
+            })
+          }
         }}
       >
         {({ isSubmitting, errors, touched }) => (
@@ -84,7 +107,7 @@ const CreateTask = () => {
               </FormControl>
 
               <Button type='submit' disabled={isSubmitting}>
-                Create Task
+                {!id ? "Create Task" : "Update Task"}
               </Button>
             </VStack>
           </Form>
