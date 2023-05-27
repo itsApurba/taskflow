@@ -13,7 +13,7 @@ router.post('/assignee/:id/:taskId', assignTask)
 router.post("/status/:id", updateTaskStatus);
 router.post("/type/:id", updateTaskType);
 
-router.put('/:id', updateTask)
+router.patch('/:id', updateTask)
 
 router.delete('/:id', deleteTask)
 
