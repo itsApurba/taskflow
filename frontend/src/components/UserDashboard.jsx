@@ -1,9 +1,9 @@
 import { Box, Button, ButtonGroup, Grid, HStack, Heading, Text, VStack, useColorModeValue } from "@chakra-ui/react";
-import React from "react";
 import CreateTask from "./CreateTask";
 import LoginForm from "./LoginForm";
 import CreateSprint from "./CreateSprint";
 import TaskList from "./TaskList";
+import SignupForm from "./SignupForm";
 
 const UserDashboard = () => {
   return (
@@ -24,11 +24,12 @@ const UserDashboard = () => {
           <Button>Create Sprint</Button>
         </ButtonGroup>
 
-        <TaskList />
 
         {/* <CreateSprint /> */}
-        <CreateTask />
+        {/* <CreateTask /> */}
         {/* <LoginForm/>  */}
+        <SignupForm/>
+        <TaskList />
         {/* Display tasks and sprints */}
         {/* <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
           
