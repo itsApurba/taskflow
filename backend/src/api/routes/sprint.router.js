@@ -1,10 +1,10 @@
 const express = require('express')
-const { addTasksToSprint, createSprint, deleteSprint, deleteTaskFromSprint } = require('../controllers/sprint.controllers')
+const { addTasksToSprint, createSprint, deleteSprint, deleteTaskFromSprint, getAllSprints } = require('../controllers/sprint.controllers')
 
 const router = express.Router()
 
 
-router.get('/', (req,res)=> res.send('hi'))
+router.get('/', getAllSprints)
 
 
 router.post('/', createSprint)
