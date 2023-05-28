@@ -13,9 +13,9 @@ router.get('/', (req, res) => {
 
 router.use('/users', userRoutes)
 router.use("/tasks", passport.authenticate("jwt", { session: false }), taskRoutes);
-router.use("/sprint", passport.authenticate("jwt", { session: false }), sprintRoutes);
+router.use("/sprints", passport.authenticate("jwt", { session: false }), sprintRoutes);
 // router.use("/tasks", taskRoutes);
-// router.use("/sprint", sprintRoutes);
+// router.use("/sprints", sprintRoutes);
 router.use('/auth', authRoutes)
 
 module.exports = router

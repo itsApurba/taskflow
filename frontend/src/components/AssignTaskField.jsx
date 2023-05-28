@@ -17,7 +17,7 @@ const AssignTaskField = (props) => {
     values: { assignee },
     setFieldValue,
   } = useFormikContext();
-  const [field, meta] = useField(props);
+  const [field] = useField(props);
 
   const { data, refetch } = useQuery(["assignee"], () => api.get(`/users/search?name=${assignee}`), {
     enabled: false,
@@ -29,14 +29,14 @@ const AssignTaskField = (props) => {
     }, 1000);
 
     return () => clearTimeout(getData);
-  }, [assignee]);
+  }, [assignee, refetch]);
 
   return (
     <FormControl isInvalid={errors.assignee && touched.assignee}>
       <FormLabel>Assignee</FormLabel>
       <InputGroup flexDir={"column"} zIndex={10} w={"full"} className='itemGroup' onClick={() => setIsModalOpen(true)} ref={ref}>
         <InputLeftElement pointerEvents='none' children={<SearchIcon color='gray.300' />} />
-        <Input {...props} {...field} />
+        <Input {...props} {...field} onFocus={() => setIsModalOpen(true)}/>
         <Menu
           isOpen={isModalOpen && assignee.length > 0 && data?.data.length > 0}
           matchWidth={true}
@@ -44,7 +44,7 @@ const AssignTaskField = (props) => {
           eventListeners={{ resize: true, scroll: true }}
         >
           <MenuButton className='menubuttonclass' />
-          <MenuList w={"full"} className='menulist'>
+          <MenuList w={"full"} className='menulist' maxH={"200px"} overflow={'scroll'}>
             {data?.data.map((user) => (
               <MenuItem gap={2} key={user._id} value={user._id} onClick={() => setFieldValue("assignee", user._id)}>
                 <Avatar size={"xs"} /> {user.name}

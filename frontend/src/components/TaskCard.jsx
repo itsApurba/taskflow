@@ -20,13 +20,13 @@ import {
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import React from "react";
 import api from "../api/api";
-import { useMutation } from "@tanstack/react-query";
-import {useNavigate} from 'react-router-dom'
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const TaskCard = ({ task, refetch }) => {
-  const navigate = useNavigate()  
+  const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const cancelRef = React.useRef();
+  const cancelRef = React.useRef(null);
 
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/tasks/${task._id}`),
@@ -56,10 +56,16 @@ const TaskCard = ({ task, refetch }) => {
     console.log(task);
   };
 
+  const getAssignee = useQuery({
+    queryKey: ["assignee-data", task._id],
+    queryFn: () => api.get(`/users/${task.assignee}`),
+  });
+
+  console.log(task);
   const handleEdit = () => {
-    navigate(`/task/${task._id}`,{
+    navigate(`/task/${task._id}`, {
       state: {
-        task
+        task,
       },
     });
     // console.log(task);
@@ -82,6 +88,7 @@ const TaskCard = ({ task, refetch }) => {
             )}
           </HStack>
           <Text>{task.description}</Text>
+          {getAssignee?.data && <Text>Assignee: {getAssignee?.data?.data.name}</Text>}
         </VStack>
         <HStack>
           <Select name='status' onChange={handleStatusChange}>

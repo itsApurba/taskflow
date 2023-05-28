@@ -9,7 +9,7 @@ const TaskList = () => {
     queryKey: ["tasks"],
     queryFn: async () => {
       const res = await api.get("/tasks");
-      return res.data;
+      return res.data.reverse();
     },
   });
   return (

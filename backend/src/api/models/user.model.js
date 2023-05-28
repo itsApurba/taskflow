@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const moment = require("moment-timezone");
 const httpStatus = require("http-status");
-const jwt = require('jwt-simple')
-const {jwtExpirationInterval, jwtSecret} = require('../../config/vars')
+const jwt = require("jwt-simple");
+const { jwtExpirationInterval, jwtSecret } = require("../../config/vars");
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -76,30 +76,33 @@ UserSchema.statics = {
     });
   },
   async findAndGenerateToken(options) {
-    const { email, password, refreshObject } = options;
-    console.log(options)
-    if (!email) throw new Error({ message: "An email is required to generate a token" });
+    try {
+      const { email, password, refreshObject } = options;
+      if (!email) throw new Error({ message: "An email is required to generate a token" });
 
-    const user = await this.findOne({ email }).exec();
-    const err = {
-      status: httpStatus.UNAUTHORIZED,
-      isPublic: true,
-    };
-    if (password) {
-      if (user && (await user.passwordMatches(password))) {
-        return { user, accessToken: user.token() };
-      }
-      err.message = "Incorrect email or password";
-    } else if (refreshObject && refreshObject.userEmail === email) {
-      if (moment(refreshObject.expires).isBefore()) {
-        err.message = "Invalid refresh token.";
+      const user = await this.findOne({ email }).exec();
+      const err = {
+        status: httpStatus.UNAUTHORIZED,
+        isPublic: true,
+      };
+      if (password) {
+        if (user && (await user.passwordMatches(password))) {
+          return { user, accessToken: user.token() };
+        }
+        err.message = "Incorrect email or password";
+      } else if (refreshObject && refreshObject.userEmail === email) {
+        if (moment(refreshObject.expires).isBefore()) {
+          err.message = "Invalid refresh token.";
+        } else {
+          return { user, accessToken: user.token() };
+        }
       } else {
-        return { user, accessToken: user.token() };
+        err.message = "Incorrect email or refreshToken";
       }
-    } else {
-      err.message = "Incorrect email or refreshToken";
+      throw new Error(err);
+    } catch (error) {
+      throw error;
     }
-    throw new Error(err);
   },
 
   list({ page = 1, perPage = 30, name, email }) {
