@@ -1,5 +1,5 @@
 const express = require('express')
-const { getTasks, createTask, getTask, getTaskByUser, updateTask, updateTaskStatus, assignTask, deleteTask, updateTaskType } = require('../controllers/task.controller')
+const { getTasks, createTask, getTask, getTaskByUser, updateTask, updateTaskStatus, assignTask, deleteTask, updateTaskType, searchTasksByName } = require('../controllers/task.controller')
 const { authorize } = require('../middleware/auth')
 const passport = require('passport')
 
@@ -7,6 +7,7 @@ const router = express.Router()
 
 
 router.get('/', getTasks)
+router.get("/search", searchTasksByName);
 router.get('/:id', getTask)
 router.get('/user/:id', getTaskByUser)
 

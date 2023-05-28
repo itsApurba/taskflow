@@ -123,3 +123,13 @@ exports.deleteTask = async (req, res) => {
     res.status(400).send(error);
   }
 }
+
+exports.searchTasksByName = async (req, res) => {
+  const { name } = req.query
+  try {
+    const tasks = await Task.find({ title: { $regex: name, $options: "i" } }).limit(5);
+    res.status(200).send(tasks);
+  } catch (error) {
+    res.status(400).send(error);
+  }  
+}
