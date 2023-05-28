@@ -11,6 +11,14 @@ const AllRoutes = () => {
     <Routes>
       <Route path='/' element={<HomePage />} />
       <Route
+        path='/sprint/:id'
+        element={
+          <PrivateRoute>
+            <CreateSprint />
+          </PrivateRoute>
+        }
+      />
+      <Route
         path='/dashboard'
         element={
           <PrivateRoute>
@@ -34,9 +42,16 @@ const AllRoutes = () => {
           </PrivateRoute>
         }
       />
+      <Route
+        path='/task/:id'
+        element={
+          <PrivateRoute>
+            <CreateTask />
+          </PrivateRoute>
+        }
+      />
       <Route path='/login' element={<LoginForm />} />
       <Route path='/signup' element={<SignupForm />} />
-      <Route path='/task/:id' element={<CreateTask />} />
       <Route path='*' element={<HomePage />} />
     </Routes>
   );

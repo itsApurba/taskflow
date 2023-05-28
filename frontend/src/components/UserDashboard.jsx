@@ -41,7 +41,7 @@ const UserDashboard = () => {
         </ButtonGroup>
 
         <SprintList />
-        <TaskList />
+        {/* <TaskList /> */}
       </Grid>
     </Box>
   );

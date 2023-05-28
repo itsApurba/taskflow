@@ -12,10 +12,10 @@ router.get('/', (req, res) => {
 })
 
 router.use('/users', userRoutes)
-router.use("/tasks", passport.authenticate("jwt", { session: false }), taskRoutes);
-router.use("/sprints", passport.authenticate("jwt", { session: false }), sprintRoutes);
-// router.use("/tasks", taskRoutes);
-// router.use("/sprints", sprintRoutes);
+// router.use("/tasks", passport.authenticate("jwt", { session: false }), taskRoutes);
+// router.use("/sprints", passport.authenticate("jwt", { session: false }), sprintRoutes);
+router.use("/tasks", taskRoutes);
+router.use("/sprints", sprintRoutes);
 router.use('/auth', authRoutes)
 
 module.exports = router

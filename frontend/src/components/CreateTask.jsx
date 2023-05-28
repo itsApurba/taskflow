@@ -28,6 +28,7 @@ const CreateTask = () => {
   };
 
   const queryClient = useQueryClient();
+
   const navigate = useNavigate()
   return (
     <Box p={4} maxW={"container.lg"} m={"auto"}>
