@@ -1,4 +1,20 @@
-import { AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Box, Button, Flex, HStack, Heading, Stack, useColorMode, useColorModeValue, useDisclosure } from "@chakra-ui/react";
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Heading,
+  Stack,
+  useColorMode,
+  useColorModeValue,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { Link, NavLink } from "react-router-dom";
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import useAuth from "../hooks/useAuth";
@@ -7,12 +23,12 @@ const Header = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isLoggedIn, setIsLoggedIn } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
-    const cancelRef = useRef(null);
-const handleLogout = () => {
-  setIsLoggedIn(false);
-  localStorage.removeItem("access_token");
-  onClose();
-}
+  const cancelRef = useRef(null);
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem("access_token");
+    onClose();
+  };
 
   return (
     <Box bg={useColorModeValue("gray.100", "gray.900")} px={4} w='full'>
@@ -26,6 +42,8 @@ const handleLogout = () => {
           <HStack gap={2}>
             {isLoggedIn ? (
               <>
+                <NavLink to='/create-task'>Create Task</NavLink>
+                <NavLink to='/create-sprint'>Create Sprint</NavLink>
                 <NavLink to='/dashboard'>Dashboard</NavLink>
                 <Link onClick={onOpen}>Logout</Link>
               </>
