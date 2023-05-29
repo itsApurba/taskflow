@@ -21,7 +21,7 @@ const AssignSprintField = () => {
   useEffect(() => {
     const getData = setTimeout(() => {
       refetch();
-    }, 1000);
+    }, 500);
 
     return () => clearTimeout(getData);
   }, [taskInput, refetch]);

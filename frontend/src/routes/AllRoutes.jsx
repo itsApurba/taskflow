@@ -1,15 +1,23 @@
 import { Routes, Route } from "react-router-dom";
-import HomePage from "../pages/HomePage";
 import CreateTask from "../components/CreateTask";
 import PrivateRoute from "./PrivateRoute";
 import LoginForm from "../pages/LoginForm";
 import SignupForm from "../pages/SignupForm";
 import CreateSprint from "../components/CreateSprint";
+import UserDashboard from "../components/UserDashboard";
+import HomePage from "../pages/HomePage";
 
 const AllRoutes = () => {
   return (
     <Routes>
-      <Route path='/' element={<HomePage />} />
+      <Route
+        path='/'
+        element={
+          <PrivateRoute>
+            <UserDashboard />
+          </PrivateRoute>
+        }
+      />
       <Route
         path='/sprint/:id'
         element={
@@ -22,7 +30,7 @@ const AllRoutes = () => {
         path='/dashboard'
         element={
           <PrivateRoute>
-            <HomePage />
+            <UserDashboard />
           </PrivateRoute>
         }
       />

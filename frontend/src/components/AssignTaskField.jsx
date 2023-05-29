@@ -26,7 +26,7 @@ const AssignTaskField = (props) => {
   useEffect(() => {
     const getData = setTimeout(() => {
       refetch();
-    }, 1000);
+    }, 500);
 
     return () => clearTimeout(getData);
   }, [assignee, refetch]);

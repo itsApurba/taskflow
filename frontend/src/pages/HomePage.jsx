@@ -1,12 +1,16 @@
-import React from "react";
-import SignupForm from "./SignupForm";
-import LoginForm from "./LoginForm";
-import UserDashboard from "../components/UserDashboard";
+import { Button, ButtonGroup, Center } from '@chakra-ui/react'
+import React from 'react'
+import { Link } from 'react-router-dom'
 
 const HomePage = () => {
   return (
-    <UserDashboard />
-  );
-};
+    <Center w={'full'} h={"70vh"}>
+        <ButtonGroup>
+            <Button as={Link} to="/login">Login</Button>
+            <Button as={Link} to="/signup">Signup</Button>
+        </ButtonGroup>
+    </Center>
+  )
+}
 
-export default HomePage;
+export default HomePage

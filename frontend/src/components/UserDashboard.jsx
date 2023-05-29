@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import SprintList from "./SprintList";
 
 const UserDashboard = () => {
-  const { userName } = useAuth();
+  const { userName, isTaskView, setIsTaskView } = useAuth();
   const navigate = useNavigate();
   return (
     <Box p={4} maxW={"container.lg"} m={"auto"}>
@@ -24,24 +24,25 @@ const UserDashboard = () => {
           </HStack>
         </Box>
         <ButtonGroup justifyContent={"center"} py={4}>
-          <Button
-            onClick={() => {
-              navigate("/create-task");
-            }}
-          >
-            Create Task
-          </Button>
-          <Button
-            onClick={() => {
-              navigate("/create-sprint");
-            }}
-          >
-            Create Sprint
-          </Button>
+          {isTaskView ? (
+            <Button
+              onClick={() => {
+                setIsTaskView(false);
+              }}
+            >
+              Show Sprints
+            </Button>
+          ) : (
+            <Button
+              onClick={() => {
+                setIsTaskView(true);
+              }}
+            >
+              Show Tasks
+            </Button>
+          )}
         </ButtonGroup>
-
-        <SprintList />
-        {/* <TaskList /> */}
+        {isTaskView ? <TaskList /> : <SprintList />}
       </Grid>
     </Box>
   );
