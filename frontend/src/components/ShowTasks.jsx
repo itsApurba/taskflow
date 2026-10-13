@@ -1,9 +1,10 @@
-import { Box, Button, ButtonGroup, Heading, Text, VStack, useColorModeValue } from "@chakra-ui/react";
+import { Box, Button, ButtonGroup, Heading, Text, VStack } from "@chakra-ui/react";
+import { useColorModeValue } from "../hooks/useColorMode";
 import api from "../api/api";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 const ShowTasks = ({ task }) => {
-  const { data, refetch } = useQuery({
+  const { data } = useQuery({
     queryKey: ["tasks", task],
     queryFn: async () => {
       const res = await api.get(`/tasks/${task}`);
@@ -15,7 +16,7 @@ const ShowTasks = ({ task }) => {
   return (
     <Box my={4} rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
       <VStack>
-        <Heading>Name: {data?.title}</Heading>
+        <Heading size={"4xl"}>Name: {data?.title}</Heading>
         <Text>Description: {data?.description}</Text>
         <Text>Type: {data?.type}</Text>
         <Text>Status: {data?.status}</Text>

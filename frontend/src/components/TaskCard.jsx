@@ -1,23 +1,19 @@
 import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
   Button,
   ButtonGroup,
-  Divider,
+  Dialog,
   HStack,
   Heading,
   IconButton,
-  Select,
+  NativeSelect,
+  Portal,
+  Separator,
   SimpleGrid,
   Text,
   VStack,
   useDisclosure,
 } from "@chakra-ui/react";
-import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { LuSquarePen, LuTrash2 } from "react-icons/lu";
 import React from "react";
 import api from "../api/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -25,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 
 const TaskCard = ({ task, refetch }) => {
   const navigate = useNavigate();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef(null);
 
   const deleteMutation = useMutation({
@@ -75,7 +71,7 @@ const TaskCard = ({ task, refetch }) => {
       <HStack w={"full"} justify={"space-between"}>
         <VStack align={"flex-start"}>
           <HStack>
-            <Heading as={"h3"} size={"md"}>
+            <Heading as={"h3"} size={"xl"}>
               {task.title}
             </Heading>
             <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"}>
@@ -91,48 +87,63 @@ const TaskCard = ({ task, refetch }) => {
           {getAssignee?.data && <Text>Assignee: {getAssignee?.data?.data.name}</Text>}
         </VStack>
         <HStack>
-          <Select name='status' onChange={handleStatusChange}>
-            <option value=''>status</option>
-            <option value='not started'>Not Started</option>
-            <option value='in progress'>In Progress</option>
-            <option value='completed'>Completed</option>
-            <option value='closed'>Closed</option>{" "}
-          </Select>
-          <Select name='type' onChange={handleTypeChange}>
-            <option value=''>Type</option>
-            <option value='bug'>Bug</option>
-            <option value='feature'>Feature</option>
-            <option value='story'>Story</option>
-          </Select>
+          <NativeSelect.Root>
+            <NativeSelect.Field name='status' onChange={handleStatusChange}>
+              <option value=''>status</option>
+              <option value='not started'>Not Started</option>
+              <option value='in progress'>In Progress</option>
+              <option value='completed'>Completed</option>
+              <option value='closed'>Closed</option>{" "}
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+          <NativeSelect.Root>
+            <NativeSelect.Field name='type' onChange={handleTypeChange}>
+              <option value=''>Type</option>
+              <option value='bug'>Bug</option>
+              <option value='feature'>Feature</option>
+              <option value='story'>Story</option>
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
 
           <ButtonGroup justifyContent={"center"} py={4}>
-            <IconButton onClick={handleEdit} icon={<EditIcon color={"blue.500"} />} />
-            <IconButton onClick={onOpen} icon={<DeleteIcon color={"red.500"} />} />
+            <IconButton onClick={handleEdit} color={"blue.500"}>
+              <LuSquarePen />
+            </IconButton>
+            <IconButton onClick={onOpen} color={"red.500"}>
+              <LuTrash2 />
+            </IconButton>
           </ButtonGroup>
         </HStack>
       </HStack>
-      <Divider py={2} />
+      <Separator py={2} />
 
-      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-              Delete Task
-            </AlertDialogHeader>
+      <Dialog.Root role='alertdialog' open={open} onOpenChange={(e) => !e.open && onClose()} initialFocusEl={() => cancelRef.current}>
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title fontSize='lg' fontWeight='bold'>
+                  Delete Task
+                </Dialog.Title>
+              </Dialog.Header>
 
-            <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+              <Dialog.Body>Are you sure? You can't undo this action afterwards.</Dialog.Body>
 
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button isLoading={deleteMutation.isLoading} colorScheme='red' onClick={handleDelete} ml={3}>
-                Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+              <Dialog.Footer>
+                <Button ref={cancelRef} onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button loading={deleteMutation.isPending} variant='solid' colorPalette='red' onClick={handleDelete}>
+                  Delete
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </SimpleGrid>
   );
 };

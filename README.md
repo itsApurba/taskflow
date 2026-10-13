@@ -66,7 +66,7 @@ The taskFlow application utilizes the following technologies:
 To run the TaskFlow application locally, please follow the steps below:
 To install this project, you will need the following:
 
-* Node.js (npm)
+* Node.js `^20.19.0 || ^22.13.0 || >=24` (npm)
 * MongoDB
 * Git
 

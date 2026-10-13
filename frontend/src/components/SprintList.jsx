@@ -1,4 +1,5 @@
-import { Box, Divider, Flex, SimpleGrid, Spinner, useColorModeValue } from "@chakra-ui/react";
+import { Box, Flex, Separator, SimpleGrid, Spinner } from "@chakra-ui/react";
+import { useColorModeValue } from "../hooks/useColorMode";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/api";
 import SprintCard from "./SprintCard";
@@ -13,7 +14,7 @@ const SprintList = () => {
   });
   return (
     <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8} mb={8}>
-      <Divider />
+      <Separator />
       <SimpleGrid mt={4} columns={[1,2,3,3]} rowGap={8} columnGap={4}>
         {isLoading ? (
           <Flex w={"full"}>

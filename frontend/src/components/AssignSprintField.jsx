@@ -1,8 +1,10 @@
-import { Button, FormControl, FormLabel, Input, InputGroup, InputLeftElement, Menu, MenuButton, MenuItem, MenuList, useOutsideClick } from "@chakra-ui/react";
+import { Box, Field as ChakraField, Input } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useFormikContext } from "formik";
 import { useEffect, useRef, useState } from "react";
 import api from "../api/api";
+import useOutsideClick from "../hooks/useOutsideClick";
+import { SearchMenu, SearchMenuItem } from "./SearchMenu";
 
 const AssignSprintField = () => {
   const ref = useRef(null);
@@ -14,7 +16,9 @@ const AssignSprintField = () => {
   const { errors, touched, values, setFieldValue } = useFormikContext();
   const [taskInput, setTaskInput] = useState("");
 
-  const { data, refetch } = useQuery(["tasks-search"], () => api.get(`/tasks/search?name=${taskInput}`), {
+  const { data, refetch } = useQuery({
+    queryKey: ["tasks-search"],
+    queryFn: () => api.get(`/tasks/search?name=${taskInput}`),
     enabled: false,
   });
 
@@ -31,25 +35,25 @@ const AssignSprintField = () => {
   };
   const handleClick = (taskId) => {
     setFieldValue("tasks", [...values.tasks, taskId]);
+    setIsModalOpen(false);
   };
   console.log(values);
   return (
-    <FormControl isInvalid={errors.task && touched.task}>
-      <FormLabel>Task</FormLabel>
-      <InputGroup flexDir={"column"} zIndex={1} w={"full"} className='itemGroup'>
-        <Input value={taskInput} onChange={handleChange} onClick={() => setIsModalOpen(true)} ref={ref} />
-        <Menu isOpen={isModalOpen && taskInput.length > 0 && data?.data.length > 0} matchWidth={true} flip={false}>
-          <MenuButton className='menubuttonclass' />
-          <MenuList w={"full"} className='menulist' maxH={"200px"} overflow={"scroll"}>
+    <ChakraField.Root invalid={errors.task && touched.task}>
+      <ChakraField.Label>Task</ChakraField.Label>
+      <Box position='relative' zIndex={1} w={"full"} className='itemGroup' ref={ref}>
+        <Input value={taskInput} onChange={handleChange} onClick={() => setIsModalOpen(true)} />
+        {isModalOpen && taskInput.length > 0 && data?.data.length > 0 && (
+          <SearchMenu>
             {data?.data.map((task) => (
-              <MenuItem gap={2} key={task._id} value={task._id} onClick={() => handleClick(task._id)}>
+              <SearchMenuItem key={task._id} onClick={() => handleClick(task._id)}>
                 {task.title}
-              </MenuItem>
+              </SearchMenuItem>
             ))}
-          </MenuList>
-        </Menu>
-      </InputGroup>
-    </FormControl>
+          </SearchMenu>
+        )}
+      </Box>
+    </ChakraField.Root>
   );
 };
 

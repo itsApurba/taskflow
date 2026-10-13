@@ -1,28 +1,13 @@
-import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Box,
-  Button,
-  Flex,
-  HStack,
-  Heading,
-  Stack,
-  useColorMode,
-  useColorModeValue,
-  useDisclosure,
-} from "@chakra-ui/react";
+import { Box, Button, Dialog, Flex, HStack, Heading, Portal, Stack, useDisclosure } from "@chakra-ui/react";
 import { Link, NavLink } from "react-router-dom";
-import { MoonIcon, SunIcon } from "@chakra-ui/icons";
+import { LuMoon, LuSun } from "react-icons/lu";
 import useAuth from "../hooks/useAuth";
+import { useColorMode, useColorModeValue } from "../hooks/useColorMode";
 import { useRef } from "react";
 const Header = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isLoggedIn, setIsLoggedIn } = useAuth();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef(null);
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -32,7 +17,7 @@ const Header = () => {
 
   return (
     <Box bg={useColorModeValue("gray.100", "gray.900")} px={4} w='full'>
-      <Flex h={16} alignItems={"center"} justifyContent={"space-between"} maxW={"container.lg"} m={"auto"} w='full' position={"sticky"}>
+      <Flex h={16} alignItems={"center"} justifyContent={"space-between"} maxW={"5xl"} m={"auto"} w='full' position={"sticky"}>
         <Link to={"/"}>
           <Heading fontFamily={"cursive"} fontSize={"2xl"}>
             TaskFlow
@@ -45,7 +30,15 @@ const Header = () => {
                 <NavLink to='/create-task'>Create Task</NavLink>
                 <NavLink to='/create-sprint'>Create Sprint</NavLink>
                 <NavLink to='/dashboard'>Dashboard</NavLink>
-                <Link onClick={onOpen}>Logout</Link>
+                <Link
+                  onClick={(e) => {
+                    // This link only opens the confirm dialog; react-router v7 throws when a Link without `to` navigates.
+                    e.preventDefault();
+                    onOpen();
+                  }}
+                >
+                  Logout
+                </Link>
               </>
             ) : (
               <>
@@ -55,32 +48,37 @@ const Header = () => {
             )}
           </HStack>
           <Flex alignItems={"center"}>
-            <Stack direction={"row"} spacing={5}>
-              <Button onClick={toggleColorMode}>{colorMode === "light" ? <MoonIcon /> : <SunIcon />}</Button>
+            <Stack direction={"row"} gap={5}>
+              <Button onClick={toggleColorMode}>{colorMode === "light" ? <LuMoon /> : <LuSun />}</Button>
             </Stack>
           </Flex>
         </HStack>
 
-        <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
-          <AlertDialogOverlay>
-            <AlertDialogContent>
-              <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                Logout
-              </AlertDialogHeader>
+        <Dialog.Root role='alertdialog' open={open} onOpenChange={(e) => !e.open && onClose()} initialFocusEl={() => cancelRef.current}>
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title fontSize='lg' fontWeight='bold'>
+                    Logout
+                  </Dialog.Title>
+                </Dialog.Header>
 
-              <AlertDialogBody>Are you sure?</AlertDialogBody>
+                <Dialog.Body>Are you sure?</Dialog.Body>
 
-              <AlertDialogFooter>
-                <Button ref={cancelRef} onClick={onClose}>
-                  Nevermind!
-                </Button>
-                <Button colorScheme='red' onClick={handleLogout} ml={3}>
-                  Yup!
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialogOverlay>
-        </AlertDialog>
+                <Dialog.Footer>
+                  <Button ref={cancelRef} onClick={onClose}>
+                    Nevermind!
+                  </Button>
+                  <Button variant='solid' colorPalette='red' onClick={handleLogout}>
+                    Yup!
+                  </Button>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
       </Flex>
     </Box>
   );
