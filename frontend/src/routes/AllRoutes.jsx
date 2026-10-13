@@ -8,7 +8,8 @@ import HomePage from "../pages/HomePage";
 import Dashboard from "../pages/Dashboard";
 import TasksPage from "../pages/TasksPage";
 import SprintsPage from "../pages/SprintsPage";
-import ComingSoonPage from "../pages/ComingSoonPage";
+import LeaderboardPage from "../pages/LeaderboardPage";
+import ProfilePage from "../pages/ProfilePage";
 import MarketPage from "../pages/MarketPage";
 import MarketTaskPage from "../pages/MarketTaskPage";
 import PostTaskPage from "../pages/PostTaskPage";
@@ -47,9 +48,8 @@ const AllRoutes = () => {
         <Route path='/store' element={<StorePage />} />
         <Route path='/store/redemptions' element={<RedemptionsPage />} />
         <Route path='/store/penalties' element={<PenaltiesPage />} />
-        {/* Placeholders until the game screens are built; replace each with its page. */}
-        <Route path='/leaderboard' element={<ComingSoonPage key='leaderboard' feature='leaderboard' />} />
-        <Route path='/profile' element={<ComingSoonPage key='profile' feature='profile' />} />
+        <Route path='/leaderboard' element={<LeaderboardPage />} />
+        <Route path='/profile' element={<ProfilePage />} />
       </Route>
       <Route element={<AuthLayout />}>
         <Route path='/login' element={<LoginForm />} />

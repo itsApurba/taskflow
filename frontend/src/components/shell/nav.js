@@ -1,8 +1,7 @@
 import { LuCalendarRange, LuGift, LuHouse, LuSquareKanban, LuStore, LuTrophy, LuUser, LuWallet } from "react-icons/lu";
 
 // One place for every destination in the app. `paths` decides which item is
-// highlighted; `soon` marks screens that still show the "coming soon" page.
-// When you build one of those screens, drop its `soon` flag.
+// highlighted; `soon: true` would tag a destination that is not built yet.
 export const NAV = {
   home: { to: "/", label: "Home", icon: LuHouse, paths: ["/", "/dashboard"] },
   board: { to: "/tasks", label: "Board", icon: LuSquareKanban, paths: ["/tasks", "/task", "/create-task"] },
@@ -10,8 +9,8 @@ export const NAV = {
   market: { to: "/market", label: "Market", icon: LuStore, paths: ["/market"] },
   wallet: { to: "/wallet", label: "Wallet", icon: LuWallet, paths: ["/wallet"] },
   store: { to: "/store", label: "Store", icon: LuGift, paths: ["/store"] },
-  leaderboard: { to: "/leaderboard", label: "Leaderboard", shortLabel: "Ranks", icon: LuTrophy, paths: ["/leaderboard"], soon: true },
-  profile: { to: "/profile", label: "Profile", icon: LuUser, paths: ["/profile"], soon: true },
+  leaderboard: { to: "/leaderboard", label: "Leaderboard", shortLabel: "Ranks", icon: LuTrophy, paths: ["/leaderboard"] },
+  profile: { to: "/profile", label: "Profile", icon: LuUser, paths: ["/profile"] },
 };
 
 export const SIDEBAR_GROUPS = [

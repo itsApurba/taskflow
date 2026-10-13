@@ -17,12 +17,13 @@ TaskFlow is a gamified Jira. People claim tasks like loot, earn credits when the
 | `src/theme.js` | Chakra UI 3 system: tokens, semantic tokens, text/layer styles, keyframes, recipe overrides |
 | `src/lib/game.js` | Game vocabulary: reward tiers, task statuses and lanes, task types, level maths, number formatting |
 | `src/lib/sprints.js` | Sprint phase (upcoming/active/ended), sorting, date range text |
+| `src/lib/leaderboard.js` | Leaderboard periods, medal colours (`RANK_MEDALS`), ordinals, "where you stand" copy |
 | `src/lib/store.js` | Wallet and store vocabulary: ledger kinds, redemption statuses, reward icons, stock helpers, `apiErrorMessage` |
 | `src/components/ui/` | Reusable presentational components (no data fetching except where noted) |
 | `src/components/shell/` | App chrome: `AppShell`, `TopBar`, `Sidebar`, `BottomNav`, `AuthLayout`, `UserMenu`, `CreditPill`, `Logo`, and `nav.js` |
 | `src/components/` | Feature components: task/sprint cards, lists, forms, pickers, `PlayerCard`, `TaskRow` |
 | `src/pages/` | Route screens |
-| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode`, `useMarket` (market queries and lifecycle mutations), `useTaskFlows` (market actions with their dialogs), `usePayoutCelebration`, and the store and wallet queries `useWallet`, `useRewards`, `useRedemptions`, `usePenalties` |
+| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode`, `useLogout`, `useMarket` (market queries and lifecycle mutations), `useTaskFlows` (market actions with their dialogs), `usePayoutCelebration`, the store and wallet queries `useWallet`, `useRewards`, `useRedemptions`, `usePenalties`, and `useGameQueries` (`useLeaderboard`) |
 
 ## Tokens
 
@@ -141,6 +142,7 @@ Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the das
 | `XpBar` | XP towards the next level | `xp`, `level`, `nextLevelXp`, `size`, `showLabels`, `inverted` (on gradients) |
 | `StreakBadge` | Flame + days in a row | `days`, `compact` |
 | `RewardTierBadge` | Coin amount + tier name in tier colours | `reward`, `showAmount`, `showTier`, `size` |
+| `RankBadge` | Leaderboard place; gold, silver and bronze for the top three | `rank`, `size` (`sm`-`lg`) |
 | `StatusBadge` / `TaskTypeBadge` | Task status / type chips | `status` / `type` |
 | `UserAvatar` | Initials avatar, stable colour per name | `name`, `size` |
 | `PasswordInput` | Password with show/hide; works as a Formik `Field as` | input props |
@@ -154,6 +156,8 @@ Feature-level building blocks in `src/components/`:
 
 - `PlayerCard`: the HUD card (level, XP, credits, streak) from `useMe`, with a locked state.
 - `TaskRow`: compact, tappable task line for dashboards, sprint details and future lists.
+- `TeamMemberRow`: one report from `GET /users/team` (level, XP bar, balance, task counts, streak, active penalties).
+- `home/`: `WorkerHome` and `ManagerHome` (Home picks one by `profile.role`) and `HomePanels` (`Lane`, `SprintsPanel`, `MiniLeaderboard`).
 - `TaskCard` / `TaskList`, `SprintCard` / `SprintList`, `BoardTabs`.
 - `shell/CreditPill`: the always-visible balance in the top bar, linking to `/wallet`.
 - `MarketTaskCard`: a market listing shown like a shop item: a price tag in the reward's tier colour, title, type, poster and an `action` (Claim). `preview` renders it without links for the post form.
@@ -163,8 +167,12 @@ Feature-level building blocks in `src/components/`:
 
 ## Data and the game backend
 
-- `useMe()` fetches `GET /me` and returns `{ profile, isLoading, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
+- `useMe()` fetches `GET /me` and returns `{ profile, isLoadError, isFirstLoad, refetch, isFetching, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
+- Any other `/me` failure (network, timeout, 5xx; transient ones are retried twice) sets `isLoadError`, which stays true through refetches until `/me` answers. Then the game is not "coming soon" and the role is unknown: show a "Couldn't load…" state with a Try again button that calls `refetch` (`loading={isFetching}`), and never fall back to worker UI or locked copy.
+- Gate a whole page on `useMe().isFirstLoad`, not `isLoading`: it is true only before `/me` has ever answered, so an error or a refetch never swaps the page for a skeleton. `/me` does not retry on mount.
+- A 401 on a signed-in request ends the session (`src/api/session.js`): the API client clears the token and cache, `PrivateRoute` sends you to `/login`, and a toast says why. `/auth/*` 401s (wrong password) stay with the form.
 - `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
+- `useLeaderboard(period)` (`useGameQueries.js`) keeps `GET /leaderboard` under `["leaderboard", period]`; `invalidateMarket` refreshes it after a payout. Home and Profile read tasks, the team, rewards, redemptions and penalties through the same hooks as the market, store and wallet screens, so one cache key serves each endpoint.
 - An assignee can be an id or a populated user; use `assigneeId(task)`.
 - Market data lives in `src/hooks/useMarket.js`: `useMarket()` (`["market"]`), `useMyTasks()` (`["tasks", "mine"]`), `useReviewQueue()` (`["tasks", "review"]`), `useTeam()` and `useMarketTask(id)` (`["tasks", id]`, seeded from the list caches). `useTaskAction(action)` runs claim/submit/approve/reject/create/update/delete and then `invalidateMarket`, which refreshes the market, every `["tasks", ...]` query, `["me"]`, `["wallet"]`, `["leaderboard"]` and the team. Use the same keys on other screens so a payout shows up everywhere.
 - `useTaskFlows()` wraps those actions with their confirm/note dialogs, toasts and the approval `Celebration`; render its `dialogs` once per page.
@@ -174,12 +182,12 @@ Feature-level building blocks in `src/components/`:
 
 ### Shell
 
-- **Phones (< 768px):** sticky frosted top bar (logo, credit pill, avatar menu) and a fixed bottom tab bar: Home, Board, **Market** (raised gradient button), Store, Ranks. The wallet is reached from the credit pill; profile, theme and log out from the avatar menu.
+- **Phones (< 768px):** sticky frosted top bar (logo, credit pill, avatar menu) and a fixed bottom tab bar: Home, Board, **Market** (raised gradient button), Store, Ranks. The wallet is reached from the credit pill; profile, theme and log out from the avatar menu (theme and log out are also on the Profile page).
 - **Tablet (768-1023px):** an icon rail (96px) with small labels instead of the tab bar.
-- **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "Soon" tag on unbuilt screens and a "New task" button (hidden from workers, like every "New task" action).
+- **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "New task" button (hidden from workers, like every "New task" action).
 - When the profile is available the top bar also shows level and XP (from 768px) and the streak (from 480px).
 - Content is capped at `6xl` (1152px) with gutters of 16px (phones), 24px (`md`) and 32px (`lg`). The phone layout reserves space for the tab bar and the safe-area inset at the bottom.
-- `src/components/shell/nav.js` is the single list of destinations. `paths` decides which item is active; `soon: true` shows the "Soon" tag.
+- `src/components/shell/nav.js` is the single list of destinations. `paths` decides which item is active; `soon: true` would show a "Soon" tag on a destination that is not built yet.
 
 ### Page anatomy
 
@@ -204,12 +212,12 @@ Feature-level building blocks in `src/components/`:
 - Choice of 2-4 options with icons: `RadioCard` (task type). Longer lists: `NativeSelect`, which uses the phone's native picker.
 - Actions at the end: primary on the right, Cancel as `outline` + `gray`; on phones they stack with the primary on top.
 
-## Adding a screen (leaderboard, profile)
+## Adding a screen
 
-1. Build the page in `src/pages/` and swap it in for the `ComingSoonPage` route in `src/routes/AllRoutes.jsx`.
-2. Remove `soon: true` from its entry in `src/components/shell/nav.js`. Delete its entry from `FEATURES` in `ComingSoonPage.jsx`.
+1. Build the page in `src/pages/` and add its route in `src/routes/AllRoutes.jsx`.
+2. Add its destination to `src/components/shell/nav.js` if it belongs in the navigation.
 3. Start with `PageHeader`; use `CreditAmount`, `RewardTierBadge`, `XpBar`, `StreakBadge`, `UserAvatar`, `EmptyState` and `ConfirmDialog` rather than new one-offs. If you need a new reusable piece, add it to `src/components/ui/` and to this file.
-4. Gate role-specific UI on `profile.role` (`manager` / `worker`) from `useMe`.
+4. Gate role-specific UI on `profile.role` (`manager` / `worker`) from `useMe`; while `isLoadError` is set, show the retry state instead of picking a role.
 5. Check it at 360x740, 390x844, 768x1024 and 1440x900, in light and dark.
 
 ## Copy
