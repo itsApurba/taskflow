@@ -26,7 +26,7 @@ const refreshTokenSchema = new mongoose.Schema({
 });
 
 refreshTokenSchema.statics = {
-  generate(user) {
+  async generate(user) {
     const userId = user._id;
     const userEmail = user.email;
     const token = `${userId}.${crypto.randomBytes(40).toString("hex")}`;
@@ -37,7 +37,7 @@ refreshTokenSchema.statics = {
       userEmail,
       expires,
     });
-    tokenObject.save();
+    await tokenObject.save();
     return tokenObject;
   },
 };
