@@ -1,5 +1,5 @@
-import { Box, Flex, Grid, HStack, Heading, Icon, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { LuFlame, LuSparkles } from "react-icons/lu";
+import { Box, Button, Flex, Grid, HStack, Heading, Icon, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { LuFlame, LuRefreshCw, LuSparkles, LuTriangleAlert } from "react-icons/lu";
 import useAuth from "../hooks/useAuth";
 import useMe from "../hooks/useMe";
 import CreditAmount from "./ui/CreditAmount";
@@ -16,10 +16,11 @@ const HudStat = ({ label, children }) => (
 );
 
 // The player's HUD: level, XP, credits and streak from GET /me. Without the
-// game backend it shows a locked card that explains what is coming.
+// game backend it shows a locked card that explains what is coming; when /me
+// fails for another reason it offers a retry instead.
 const PlayerCard = (props) => {
   const { userName } = useAuth();
-  const { profile, isLoading } = useMe();
+  const { profile, isLoading, isLoadError, refetch, isFetching } = useMe();
   return (
     <Box position='relative' overflow='hidden' rounded='l3' bgGradient='hero' color='white' p={{ base: 4, md: 5 }} boxShadow='glow' {...props}>
       <Box position='absolute' top='-16' right='-12' boxSize='48' rounded='full' bg='whiteAlpha.200' filter='blur(40px)' aria-hidden />
@@ -58,6 +59,19 @@ const PlayerCard = (props) => {
               </HudStat>
             </Grid>
           </>
+        ) : isLoadError ? (
+          <Flex gap={3} bg='whiteAlpha.200' borderWidth='1px' borderColor='whiteAlpha.200' rounded='l2' p={3} align='center' wrap='wrap'>
+            <Icon as={LuTriangleAlert} boxSize={5} flexShrink={0} />
+            <Box flex='1' minW='40'>
+              <Text fontWeight='bold'>Couldn't load your stats</Text>
+              <Text fontSize='sm' color='whiteAlpha.800'>
+                Check your connection and try again.
+              </Text>
+            </Box>
+            <Button size='sm' variant='surface' colorPalette='gray' onClick={() => refetch()} loading={isFetching}>
+              <LuRefreshCw /> Try again
+            </Button>
+          </Flex>
         ) : (
           <Flex gap={3} bg='whiteAlpha.200' borderWidth='1px' borderColor='whiteAlpha.200' rounded='l2' p={3}>
             <Icon as={LuSparkles} boxSize={5} flexShrink={0} mt={0.5} />

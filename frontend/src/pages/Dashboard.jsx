@@ -1,9 +1,10 @@
 import { Button, Skeleton, Stack } from "@chakra-ui/react";
 import moment from "moment";
-import { LuPlus, LuStore } from "react-icons/lu";
+import { LuPlus, LuRefreshCw, LuStore, LuTriangleAlert } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import ManagerHome from "../components/home/ManagerHome";
 import WorkerHome from "../components/home/WorkerHome";
+import EmptyState from "../components/ui/EmptyState";
 import PageHeader from "../components/ui/PageHeader";
 import useAuth from "../hooks/useAuth";
 import useMe from "../hooks/useMe";
@@ -21,7 +22,7 @@ const greeting = () => {
 // team, workers their next task, penalties and reward goals.
 const Dashboard = () => {
   const { userName } = useAuth();
-  const { profile, isFirstLoad } = useMe();
+  const { profile, isFirstLoad, isLoadError, refetch, isFetching } = useMe();
   const tasks = useTasks();
   const isManager = profile?.role === "manager";
 
@@ -58,6 +59,20 @@ const Dashboard = () => {
           <Skeleton h='40' rounded='l3' />
           <Skeleton h='52' rounded='l3' />
         </Stack>
+      </>
+    );
+  }
+
+  // Without /me the role is unknown; ask to retry rather than guess a worker.
+  if (!profile && isLoadError) {
+    return (
+      <>
+        {header("Your board is one step away.")}
+        <EmptyState icon={LuTriangleAlert} palette='red' title="Couldn't load your board" description='Check your connection and try again.' layerStyle='panel'>
+          <Button onClick={() => refetch()} loading={isFetching}>
+            <LuRefreshCw /> Try again
+          </Button>
+        </EmptyState>
       </>
     );
   }

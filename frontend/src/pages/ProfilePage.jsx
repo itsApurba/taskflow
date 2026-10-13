@@ -10,8 +10,10 @@ import {
   LuMail,
   LuMonitor,
   LuMoon,
+  LuRefreshCw,
   LuStore,
   LuSun,
+  LuTriangleAlert,
   LuTrophy,
   LuUserRound,
   LuUsers,
@@ -264,7 +266,7 @@ const WorkerStats = ({ profile, tasksDone, rankEntry, teamCount, loadingTasks })
 
 const ProfilePage = () => {
   const { userName, userEmail, userId } = useAuth();
-  const { profile, isFirstLoad } = useMe();
+  const { profile, isFirstLoad, isLoadError, refetch, isFetching } = useMe();
   const isManager = profile?.role === "manager";
   const isWorker = profile?.role === "worker";
   const myTasks = useMyTasks({ enabled: Boolean(profile) });
@@ -282,6 +284,19 @@ const ProfilePage = () => {
           <Skeleton h='48' rounded='l3' />
           <Skeleton h='28' rounded='l3' />
         </Stack>
+      </>
+    );
+  }
+
+  if (!profile && isLoadError) {
+    return (
+      <>
+        <PageHeader eyebrow='Your profile' title='Profile' />
+        <EmptyState icon={LuTriangleAlert} palette='red' title="Couldn't load your profile" description='Check your connection and try again.' layerStyle='panel'>
+          <Button onClick={() => refetch()} loading={isFetching}>
+            <LuRefreshCw /> Try again
+          </Button>
+        </EmptyState>
       </>
     );
   }
