@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const moment = require("moment-timezone");
-const { status: httpStatus } = require("http-status");
 const jwt = require("jwt-simple");
 const { jwtExpirationInterval, jwtSecret } = require("../../config/vars");
+const APIError = require("../utils/APIError");
+const { currentStreak, xpForLevel } = require("../utils/gamification");
+
+const ROLES = ["manager", "worker"];
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -26,8 +29,34 @@ const UserSchema = new mongoose.Schema({
       ref: "Task",
     },
   ],
+  role: {
+    type: String,
+    enum: ROLES,
+    default: "worker",
+  },
+  // The worker's manager; a manager's team is every user reporting to them.
+  reportsTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+    index: true,
+  },
+  xp: { type: Number, default: 0, min: 0 },
+  level: { type: Number, default: 1, min: 1 },
+  streak: { type: Number, default: 0, min: 0 },
+  lastApprovedAt: { type: Date, default: null },
+  // Cached balance, kept in sync with the CreditTransaction ledger.
+  credits: { type: Number, default: 0, min: 0 },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
+});
+
+UserSchema.set("toJSON", {
+  transform(doc, ret) {
+    delete ret.password;
+    delete ret.__v;
+    return ret;
+  },
 });
 
 UserSchema.pre("save", async function () {
@@ -35,9 +64,7 @@ UserSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   // const rounds = env === "test" ? 1 : 10;
   const rounds = 2;
-
-  const hash = await bcrypt.hash(this.password, rounds);
-  this.password = hash;
+  this.password = await bcrypt.hash(this.password, rounds);
 });
 
 UserSchema.method({
@@ -53,6 +80,24 @@ UserSchema.method({
   async passwordMatches(password) {
     return bcrypt.compare(password, this.password);
   },
+
+  /** Public profile with gamification stats; never includes the password hash. */
+  profile() {
+    return {
+      _id: this._id,
+      name: this.name,
+      email: this.email,
+      role: this.role,
+      reportsTo: this.reportsTo,
+      credits: this.credits,
+      xp: this.xp,
+      level: this.level,
+      nextLevelXp: xpForLevel(this.level + 1),
+      streak: currentStreak(this.streak, this.lastApprovedAt),
+      lastApprovedAt: this.lastApprovedAt,
+      created_at: this.created_at,
+    };
+  },
 });
 
 UserSchema.statics = {
@@ -64,36 +109,30 @@ UserSchema.statics = {
     if (user) {
       return user;
     }
-    throw new Error({
-      message: "User does not exist",
-      status: httpStatus.NOT_FOUND,
-    });
+    throw APIError.notFound("User does not exist");
   },
   async findAndGenerateToken(options) {
     try {
       const { email, password, refreshObject } = options;
-      if (!email) throw new Error({ message: "An email is required to generate a token" });
+      if (!email) throw APIError.badRequest("An email is required to generate a token");
 
       const user = await this.findOne({ email }).exec();
-      const err = {
-        status: httpStatus.UNAUTHORIZED,
-        isPublic: true,
-      };
+      let message;
       if (password) {
         if (user && (await user.passwordMatches(password))) {
           return { user, accessToken: user.token() };
         }
-        err.message = "Incorrect email or password";
+        message = "Incorrect email or password";
       } else if (refreshObject && refreshObject.userEmail === email) {
         if (moment(refreshObject.expires).isBefore()) {
-          err.message = "Invalid refresh token.";
+          message = "Invalid refresh token.";
         } else {
           return { user, accessToken: user.token() };
         }
       } else {
-        err.message = "Incorrect email or refreshToken";
+        message = "Incorrect email or refreshToken";
       }
-      throw new Error(err);
+      throw APIError.unauthorized(message);
     } catch (error) {
       throw error;
     }
@@ -110,25 +149,14 @@ UserSchema.statics = {
   },
 
   checkDuplicateEmail(error) {
-    if (error.name === "MongoError" && error.code === 11000) {
-      return new Error({
-        message: "Validation Error",
-        errors: [
-          {
-            field: "email",
-            location: "body",
-            messages: ['"email" already exists'],
-          },
-        ],
-        status: httpStatus.CONFLICT,
-        isPublic: true,
-        stack: error.stack,
-      });
+    if (error.code === 11000) {
+      return APIError.conflict('"email" already exists');
     }
     return error;
   },
 };
 
 const User = mongoose.model("User", UserSchema);
+User.ROLES = ROLES;
 
 module.exports = User;
