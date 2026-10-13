@@ -172,7 +172,7 @@ Feature-level building blocks in `src/components/`:
 
 - **Phones (< 768px):** sticky frosted top bar (logo, credit pill, avatar menu) and a fixed bottom tab bar: Home, Board, **Market** (raised gradient button), Store, Ranks. The wallet is reached from the credit pill; profile, theme and log out from the avatar menu.
 - **Tablet (768-1023px):** an icon rail (96px) with small labels instead of the tab bar.
-- **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "Soon" tag on unbuilt screens and a "New task" button.
+- **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "Soon" tag on unbuilt screens and a "New task" button (hidden from workers, like every "New task" action).
 - When the profile is available the top bar also shows level and XP (from 768px) and the streak (from 480px).
 - Content is capped at `6xl` (1152px) with gutters of 16px (phones), 24px (`md`) and 32px (`lg`). The phone layout reserves space for the tab bar and the safe-area inset at the bottom.
 - `src/components/shell/nav.js` is the single list of destinations. `paths` decides which item is active; `soon: true` shows the "Soon" tag.
