@@ -177,8 +177,10 @@ Set these under **Settings → Environment Variables**, then redeploy:
 ```bash
 cd backend
 npm i
-MONGODB_URI='mongodb+srv://user:pass@cluster.mongodb.net/taskflow' npm run seed
+MONGO_URI='mongodb+srv://user:pass@cluster.mongodb.net/taskflow' npm run seed
 ```
+
+Pass the Atlas string as `MONGO_URI`: a variable set in the shell wins over `backend/.env`, because dotenv does not override existing variables.
 
 ### Frontend project (Root Directory `frontend`)
 
