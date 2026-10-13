@@ -4,8 +4,9 @@ import useAuth from "./useAuth";
 
 // Read-only queries for the game screens (home, profile, leaderboard). Keys
 // match the screens that change this data, so their invalidations reach here:
-// ["tasks", ...] for task moves, ["team"], ["rewards"], ["redemptions"] and
+// ["leaderboard"] after a payout, ["rewards"], ["redemptions"] and
 // ["penalties"] for the store and wallet. Every key holds the raw API response.
+// Task and team queries live in useMarket.js.
 
 const get = (url, params) => async () => (await api.get(url, { params })).data;
 
@@ -19,18 +20,6 @@ export const useLeaderboard = (period = "all", { enabled = true } = {}) => {
     staleTime: 30_000,
   });
 };
-
-// Managers: their reports, each with stats and task counts.
-export const useTeam = ({ enabled = true } = {}) =>
-  useQuery({ queryKey: ["team"], queryFn: get("/users/team"), enabled });
-
-// Workers: tasks assigned to them. Managers: tasks they posted.
-export const useMyTasks = ({ enabled = true } = {}) =>
-  useQuery({ queryKey: ["tasks", "mine"], queryFn: get("/tasks/mine"), enabled });
-
-// Managers: their tasks waiting for review, oldest submission first.
-export const useReviewQueue = ({ enabled = true } = {}) =>
-  useQuery({ queryKey: ["tasks", "review"], queryFn: get("/tasks/review"), enabled });
 
 // Workers: the manager's live rewards. Managers: everything they stock.
 export const useRewards = ({ enabled = true } = {}) => useQuery({ queryKey: ["rewards"], queryFn: get("/rewards"), enabled });

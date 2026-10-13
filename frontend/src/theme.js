@@ -201,6 +201,12 @@ const config = defineConfig({
         from: { backgroundPosition: "-200% 0" },
         to: { backgroundPosition: "200% 0" },
       },
+      // Payout celebration: each coin flies to (--tx, --ty) and fades.
+      "coin-burst": {
+        "0%": { opacity: 0, transform: "translate(-50%, -50%) scale(0.3)" },
+        "12%, 70%": { opacity: 1 },
+        "100%": { opacity: 0, transform: "translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--spin))" },
+      },
     },
     textStyles: {
       // Small all-caps label above titles and inside HUD tiles.

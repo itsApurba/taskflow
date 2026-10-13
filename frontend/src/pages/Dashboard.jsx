@@ -37,7 +37,7 @@ const Dashboard = () => {
         // The CTA depends on the role, which is unknown until /me answers.
         !isFirstLoad && !isLoadError && (
           <Button asChild>
-            <Link to='/market'>
+            <Link to={isManager ? "/market/new" : "/market"}>
               {isManager ? (
                 <>
                   <LuPlus /> Post a task

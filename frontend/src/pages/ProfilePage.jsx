@@ -32,7 +32,8 @@ import StatTile from "../components/ui/StatTile";
 import UserAvatar from "../components/ui/UserAvatar";
 import XpBar from "../components/ui/XpBar";
 import useAuth from "../hooks/useAuth";
-import { useLeaderboard, useMyTasks, useReviewQueue, useTeam } from "../hooks/useGameQueries";
+import { useLeaderboard } from "../hooks/useGameQueries";
+import { useMyTasks, useReviewQueue, useTeam } from "../hooks/useMarket";
 import useLogout from "../hooks/useLogout";
 import useMe from "../hooks/useMe";
 import { formatNumber, xpForLevel } from "../lib/game";
@@ -269,7 +270,7 @@ const ProfilePage = () => {
   const { profile, isFirstLoad, isLoadError, refetch, isFetching } = useMe();
   const isManager = profile?.role === "manager";
   const isWorker = profile?.role === "worker";
-  const myTasks = useMyTasks({ enabled: Boolean(profile) });
+  const myTasks = useMyTasks();
   const leaderboard = useLeaderboard("all", { enabled: isWorker });
   const team = useTeam({ enabled: isManager });
   const review = useReviewQueue({ enabled: isManager });

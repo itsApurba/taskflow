@@ -175,14 +175,13 @@ exports.updateTask = asyncHandler(async (req, res) => {
     if (assignee !== undefined || status !== undefined) {
       throw APIError.conflict("Use the market endpoints to change a market task's status or assignee");
     }
-    if (reward !== undefined && task.status !== "open") {
-      throw APIError.conflict("The reward can only change while the task is open");
-    }
     body = { title, type, description, reward };
   } else if (assignee !== undefined) {
     await assertTeamAssignee(req.user, assignee);
   }
-  const updated = await Task.findByIdAndUpdate(task._id, body, { returnDocument: "after", runValidators: true });
+  const filter = task.createdBy && reward !== undefined ? { _id: task._id, status: "open" } : { _id: task._id };
+  const updated = await Task.findOneAndUpdate(filter, body, { returnDocument: "after", runValidators: true });
+  if (!updated) throw APIError.conflict("The reward can only change while the task is open");
   res.status(200).send(updated);
 });
 
@@ -213,7 +212,8 @@ exports.assignTask = asyncHandler(async (req, res) => {
 exports.deleteTask = asyncHandler(async (req, res) => {
   const task = await findTeamTask(req.params.id, req.user);
   if (task.createdBy) assertTaskCreator(task, req.user);
-  await Task.deleteOne({ _id: task._id });
+  const { deletedCount } = await Task.deleteOne(task.createdBy ? { _id: task._id, status: "open" } : { _id: task._id });
+  if (!deletedCount) throw APIError.conflict("A market task can only be deleted while it is open");
   res.status(200).send(task);
 });
 

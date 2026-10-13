@@ -3,7 +3,8 @@ import moment from "moment";
 import { LuCircleCheckBig, LuGift, LuHourglass, LuPartyPopper, LuPlus, LuStore, LuTimer, LuUsers, LuZap } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import { usePenalties, useRedemptions, useReviewQueue, useTeam } from "../../hooks/useGameQueries";
+import { usePenalties, useRedemptions } from "../../hooks/useGameQueries";
+import { useReviewQueue, useTeam } from "../../hooks/useMarket";
 import useSprints from "../../hooks/useSprints";
 import useTasks from "../../hooks/useTasks";
 import { firstName, formatNumber } from "../../lib/game";
@@ -86,7 +87,7 @@ const ReviewQueue = ({ tasks }) => (
     <Stack gap={0.5}>
       {tasks.slice(0, 4).map((task) => (
         <Flex key={task._id} asChild align='center' gap={3} px={3} py={2.5} minH={14} rounded='l2' _hover={{ bg: "bg.muted" }} focusVisibleRing='inside'>
-          <Link to='/market' state={{ task }}>
+          <Link to={`/market/${task._id}`} state={{ task }}>
             <UserAvatar name={task.assignee?.name} size='sm' />
             <Box flex='1' minW={0}>
               <Text fontWeight='semibold' lineClamp={1} overflowWrap='anywhere'>
@@ -179,7 +180,7 @@ const ManagerHome = ({ header }) => {
               layerStyle='panel'
             >
               <Button asChild>
-                <Link to='/market'>
+                <Link to='/market/new'>
                   <LuPlus /> Post a task
                 </Link>
               </Button>

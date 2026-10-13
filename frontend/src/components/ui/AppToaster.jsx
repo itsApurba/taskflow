@@ -12,6 +12,7 @@ const AppToaster = () => {
               {toast.title && <Toast.Title>{toast.title}</Toast.Title>}
               {toast.description && <Toast.Description>{toast.description}</Toast.Description>}
             </Stack>
+            {toast.action && <Toast.ActionTrigger>{toast.action.label}</Toast.ActionTrigger>}
             {toast.closable && <Toast.CloseTrigger />}
           </Toast.Root>
         )}

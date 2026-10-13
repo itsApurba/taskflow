@@ -51,11 +51,11 @@ export const BOARD_STATUSES = ["not started", "in progress", "completed", "close
 
 const MARKET_STATUSES = ["open", "in review", "done"];
 
-// Market tasks are posted with a reward and live on the market, not the legacy
-// edit form.
+// Market tasks are posted with a reward and open on their market page, not the
+// legacy edit form.
 export const isMarketTask = (task) => Boolean(task?.createdBy) || MARKET_STATUSES.includes(task?.status);
 
-export const taskPath = (task) => (isMarketTask(task) ? "/market" : `/task/${task._id}`);
+export const taskPath = (task) => (isMarketTask(task) ? `/market/${task._id}` : `/task/${task._id}`);
 
 // Lanes group statuses into "what should I do next" buckets.
 export const TASK_LANES = [
