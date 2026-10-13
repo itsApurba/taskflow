@@ -23,7 +23,7 @@ TaskFlow is a gamified Jira. People claim tasks like loot, earn credits when the
 | `src/components/shell/` | App chrome: `AppShell`, `TopBar`, `Sidebar`, `BottomNav`, `AuthLayout`, `UserMenu`, `CreditPill`, `Logo`, and `nav.js` |
 | `src/components/` | Feature components: task/sprint cards, lists, forms, pickers, `PlayerCard`, `TaskRow` |
 | `src/pages/` | Route screens |
-| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode`, `useLogout`, `useMarket` (market queries and lifecycle mutations), `useTaskFlows` (market actions with their dialogs), `usePayoutCelebration`, the store and wallet queries `useWallet`, `useRewards`, `useRedemptions`, `usePenalties`, and `useGameQueries` (`useLeaderboard`) |
+| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useUser` (one person by id, `["user", id]`), `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode`, `useLogout`, `useMarket` (market queries and lifecycle mutations), `useTaskFlows` (market actions with their dialogs), `usePayoutCelebration`, the store and wallet queries `useWallet`, `useRewards`, `useRedemptions`, `usePenalties`, and `useGameQueries` (`useLeaderboard`) |
 
 ## Tokens
 
@@ -171,12 +171,12 @@ Feature-level building blocks in `src/components/`:
 - Any other `/me` failure (network, timeout, 5xx; transient ones are retried twice) sets `isLoadError`, which stays true through refetches until `/me` answers. Then the game is not "coming soon" and the role is unknown: show a "Couldn't load…" state with a Try again button that calls `refetch` (`loading={isFetching}`), and never fall back to worker UI or locked copy.
 - Gate a whole page on `useMe().isFirstLoad`, not `isLoading`: it is true only before `/me` has ever answered, so an error or a refetch never swaps the page for a skeleton. `/me` does not retry on mount.
 - A 401 on a signed-in request ends the session (`src/api/session.js`): the API client clears the token and cache, `PrivateRoute` sends you to `/login`, and a toast says why. `/auth/*` 401s (wrong password) stay with the form.
-- `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
+- `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Board status, type and delete actions invalidate every `["tasks", ...]` query, since a board task also shows up in "my tasks" and on its own page. Invalidate `["me"]` after anything that changes credits or XP.
 - `useLeaderboard(period)` (`useGameQueries.js`) keeps `GET /leaderboard` under `["leaderboard", period]`; `invalidateMarket` refreshes it after a payout. Home and Profile read tasks, the team, rewards, redemptions and penalties through the same hooks as the market, store and wallet screens, so one cache key serves each endpoint.
 - An assignee can be an id or a populated user; use `assigneeId(task)`.
 - Market data lives in `src/hooks/useMarket.js`: `useMarket()` (`["market"]`), `useMyTasks()` (`["tasks", "mine"]`), `useReviewQueue()` (`["tasks", "review"]`), `useTeam()` and `useMarketTask(id)` (`["tasks", id]`, seeded from the list caches). `useTaskAction(action)` runs claim/submit/approve/reject/create/update/delete and then `invalidateMarket`, which refreshes the market, every `["tasks", ...]` query, `["me"]`, `["wallet"]`, `["leaderboard"]` and the team. Use the same keys on other screens so a payout shows up everywhere.
 - `useTaskFlows()` wraps those actions with their confirm/note dialogs, toasts and the approval `Celebration`; render its `dialogs` once per page.
-- Store and wallet caches: `useWallet` (`["wallet"]`), `useRewards` (`["rewards"]`), `useRedemptions` (`["redemptions"]`), `usePenalties` (`["penalties"]`), `useTeam` from `useMarket.js` (`["users", "team"]`, managers). Issuing a penalty also refreshes the team. A redemption invalidates `me`, `wallet`, `rewards` and `redemptions`; clearing a penalty invalidates `me`, `wallet` and `penalties`.
+- Store and wallet caches: `useWallet` (`["wallet"]`; a balance that differs from the cached `/me` credits also refreshes `["me"]`, so a payout approved by the manager reaches the credit pill and XP on the next wallet fetch), `useRewards` (`["rewards"]`), `useRedemptions` (`["redemptions"]`), `usePenalties` (`["penalties"]`), `useTeam` from `useMarket.js` (`["users", "team"]`, managers). Issuing a penalty also refreshes the team. A redemption invalidates `me`, `wallet`, `rewards` and `redemptions`; clearing a penalty invalidates `me`, `wallet` and `penalties`.
 
 ## Layout
 

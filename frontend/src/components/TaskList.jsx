@@ -2,7 +2,7 @@ import { SimpleGrid, Skeleton } from "@chakra-ui/react";
 import TaskCard from "./TaskCard";
 
 // Grid of task cards with a loading skeleton; `empty` renders when there is nothing to show.
-const TaskList = ({ tasks, isLoading, refetch, empty }) => {
+const TaskList = ({ tasks, isLoading, empty }) => {
   if (isLoading) {
     return (
       <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
@@ -16,7 +16,7 @@ const TaskList = ({ tasks, isLoading, refetch, empty }) => {
   return (
     <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
       {tasks.map((task) => (
-        <TaskCard key={task._id} task={task} refetch={refetch} />
+        <TaskCard key={task._id} task={task} />
       ))}
     </SimpleGrid>
   );

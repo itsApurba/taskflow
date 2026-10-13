@@ -24,7 +24,7 @@ const TasksPage = () => {
   const { userId } = useAuth();
   const { profile } = useMe();
   const canPost = profile?.role !== "worker";
-  const { data: tasks, isLoading, refetch } = useTasks();
+  const { data: tasks, isLoading } = useTasks();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const lane = params.get("lane") ?? "all";
@@ -91,7 +91,6 @@ const TasksPage = () => {
       <TaskList
         tasks={visible}
         isLoading={isLoading}
-        refetch={refetch}
         empty={
           filtered ? (
             <EmptyState icon={LuSearchX} title='No tasks match' description='Try another filter or search term.' layerStyle='panel'>
