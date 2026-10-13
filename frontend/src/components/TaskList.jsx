@@ -13,7 +13,7 @@ const TaskList = () => {
     },
   });
   return (
-    <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
+    <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 4, md: 8 }}>
       <Separator />
       {isLoading ? (
         <Flex w={'full'}>

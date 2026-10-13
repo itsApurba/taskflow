@@ -16,8 +16,8 @@ const SignupForm = () => {
   const navigate = useNavigate()
   const { setUserEmail, setIsLoggedIn, setUserName, setUserId } = useAuth();
   return (
-    <Box p={4} maxW={"5xl"} m={"auto"}>
-      <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
+    <Box p={{ base: 3, md: 4 }} maxW={"5xl"} m={"auto"}>
+      <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 5, md: 8 }}>
 
     <Formik
       initialValues={{ name: "", email: "", password: "" }}
@@ -74,7 +74,7 @@ const SignupForm = () => {
               </ChakraField.ErrorText>
             </ChakraField.Root>
 
-            <Button type='submit' disabled={isSubmitting}>
+            <Button type='submit' w={{ base: "full", md: "auto" }} disabled={isSubmitting}>
               Sign Up
             </Button>
           </VStack>

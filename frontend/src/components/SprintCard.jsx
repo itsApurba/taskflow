@@ -1,5 +1,5 @@
 import { LuTrash2 } from "react-icons/lu";
-import { HStack, Heading, IconButton, Text, VStack } from "@chakra-ui/react";
+import { Box, HStack, Heading, IconButton, Text, VStack } from "@chakra-ui/react";
 import { toaster } from "./ui/toaster";
 import moment from "moment";
 import api from "../api/api";
@@ -35,15 +35,17 @@ const SprintCard = ({ sprint, refetch }) => {
     <VStack
       align={"flex-start"}
       shadow={"lg"}
-      p={2}
+      p={{ base: 3, md: 2 }}
       transitionDuration='0.3s'
       _hover={{
         transform: "translateY(-2px)",
         cursor: "pointer",
       }}
     >
-      <HStack w={"full"} align={"center"} justify={"space-evenly"}>
-        <div
+      <HStack w={"full"} align={"center"} justify={"space-between"} gap={3}>
+        <Box
+          flex={1}
+          minW={0}
           onClick={() =>
             navigate(`/sprint/${sprint._id}`, {
               state: {
@@ -53,7 +55,7 @@ const SprintCard = ({ sprint, refetch }) => {
           }
         >
           <VStack align={"flex-start"}>
-            <Heading size={"3xl"} fontWeight={"normal"}>
+            <Heading size={{ base: "2xl", md: "3xl" }} fontWeight={"normal"} overflowWrap={"anywhere"}>
               {sprint.name}
             </Heading>
             <VStack align={"flex-start"} lineHeight={"0.8"}>
@@ -69,7 +71,7 @@ const SprintCard = ({ sprint, refetch }) => {
               </Text>
             )}
           </VStack>
-        </div>
+        </Box>
         <IconButton zIndex={1000} shadow={"lg"} aria-label='delete' loading={loading} onClick={handleDelete} color={"red.500"}>
           <LuTrash2 />
         </IconButton>

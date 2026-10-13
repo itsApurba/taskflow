@@ -7,13 +7,15 @@ import SprintList from "./SprintList";
 const UserDashboard = () => {
   const { userName, isTaskView, setIsTaskView } = useAuth();
   return (
-    <Box p={4} maxW={"5xl"} m={"auto"}>
+    <Box p={{ base: 3, md: 4 }} maxW={"5xl"} m={"auto"}>
       <Grid columns={3}>
         {/* Display user info */}
-        <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
+        <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 5, md: 8 }}>
           <HStack>
-            <VStack align={"flex-start"}>
-              <Heading size={"4xl"}>{userName}</Heading>
+            <VStack align={"flex-start"} minW={0}>
+              <Heading size={{ base: "2xl", md: "4xl" }} overflowWrap={"anywhere"}>
+                {userName}
+              </Heading>
               {/* <Text>{userEmail}</Text> */}
             </VStack>
             {/* Total tasks completed */}
