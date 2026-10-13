@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const moment = require("moment-timezone");
-const httpStatus = require("http-status");
+const { status: httpStatus } = require("http-status");
 const jwt = require("jwt-simple");
 const { jwtExpirationInterval, jwtSecret } = require("../../config/vars");
 
@@ -30,20 +30,14 @@ const UserSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now },
 });
 
-UserSchema.pre("save", async function (next) {
-  try {
-    this.updated_at = Date.now();
-    if (!this.isModified("password")) return next();
-    // const rounds = env === "test" ? 1 : 10;
-    const rounds = 2;
+UserSchema.pre("save", async function () {
+  this.updated_at = Date.now();
+  if (!this.isModified("password")) return;
+  // const rounds = env === "test" ? 1 : 10;
+  const rounds = 2;
 
-    const hash = await bcrypt.hash(this.password, rounds);
-    this.password = hash;
-
-    return next();
-  } catch (error) {
-    return next(error);
-  }
+  const hash = await bcrypt.hash(this.password, rounds);
+  this.password = hash;
 });
 
 UserSchema.method({

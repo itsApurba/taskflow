@@ -2,7 +2,7 @@ const RefreshToken = require("../models/refreshToken.model");
 const moment = require("moment-timezone");
 const { jwtExpirationInterval } = require("../../config/vars");
 const User = require("../models/user.model");
-const httpStatus = require("http-status");
+const { status: httpStatus } = require("http-status");
 
 function generateTokenResponse(user, accessToken) {
   const tokenType = "Bearer";
@@ -43,7 +43,7 @@ exports.login = async (req, res, next) => {
 exports.refresh = async (req, res, next) => {
   try {
     const { email, refreshToken } = req.body;
-    const refreshObject = await RefreshToken.findOneAndRemove({
+    const refreshObject = await RefreshToken.findOneAndDelete({
       userEmail: email,
       token: refreshToken,
     });
