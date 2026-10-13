@@ -509,6 +509,23 @@ describe("team scoping of board endpoints", () => {
     await api().delete(`/api/tasks/${legacy._id}`).set(manager.auth).expect(404);
     expect((await Task.findById(legacy._id)).title).toBe("Their legacy task");
   });
+  test("legacy tasks cannot be reassigned to another team", async () => {
+    const { manager, workers } = await team(2);
+    const other = await team(1);
+    const legacy = await Task.create({ title: "Our legacy task", assignee: workers[0].user._id });
+    for (const send of [
+      (r) => r.patch(`/api/tasks/${legacy._id}`).send({ assignee: other.workers[0].user._id }),
+      (r) => r.post(`/api/tasks/assignee/${other.workers[0].user._id}/${legacy._id}`),
+    ]) {
+      const res = await send(api()).set(manager.auth).expect(404);
+      expect(res.body.message).toBe("User not found in your team");
+    }
+    expect(String((await Task.findById(legacy._id)).assignee)).toBe(workers[0].user._id);
+    await api().get(`/api/tasks/${legacy._id}`).set(other.workers[0].auth).expect(404);
+
+    const moved = await api().patch(`/api/tasks/${legacy._id}`).set(workers[0].auth).send({ assignee: workers[1].user._id }).expect(200);
+    expect(moved.body.assignee).toBe(workers[1].user._id);
+  });
 });
 
 describe("failure recovery", () => {

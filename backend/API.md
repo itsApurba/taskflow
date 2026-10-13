@@ -166,7 +166,8 @@ Your tasks in `in review`, oldest submission first, `assignee` populated.
 routes keep working (with a JWT). They are scoped to your team: you see your team
 manager's market tasks plus legacy tasks (no `createdBy`) assigned to someone in your
 team. Any other task is left out of lists and searches, and reading or changing it by
-id returns `404`; `POST /tasks/assignee/...` only assigns to members of your team.
+id returns `404`. `POST /tasks/assignee/...` and an `assignee` sent to `PATCH /tasks/:id`
+must be a member of your team, otherwise `404`.
 For market tasks: status/assignee changes there return `409`, and edit/delete is
 limited to the posting manager (`403`).
 

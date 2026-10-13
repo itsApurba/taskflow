@@ -38,6 +38,12 @@ const assertTaskCreator = (task, user) => {
   if (!sameId(task.createdBy, user._id)) throw APIError.forbidden("Only the manager who posted this task can do this");
 };
 
+/** Legacy tasks can only be assigned to someone in the caller's team. */
+async function assertTeamAssignee(user, assignee) {
+  const team = await teamMemberIds(user);
+  if (!team.some((id) => sameId(id, assignee))) throw APIError.notFound("User not found in your team");
+}
+
 // ---- Market ----
 
 exports.getMarket = asyncHandler(async (req, res) => {
@@ -173,6 +179,8 @@ exports.updateTask = asyncHandler(async (req, res) => {
       throw APIError.conflict("The reward can only change while the task is open");
     }
     body = { title, type, description, reward };
+  } else if (assignee !== undefined) {
+    await assertTeamAssignee(req.user, assignee);
   }
   const updated = await Task.findByIdAndUpdate(task._id, body, { returnDocument: "after", runValidators: true });
   res.status(200).send(updated);
@@ -197,8 +205,7 @@ exports.updateTaskType = asyncHandler(async (req, res) => {
 exports.assignTask = asyncHandler(async (req, res) => {
   const task = await findTeamTask(req.params.taskId, req.user);
   if (task.createdBy) throw APIError.conflict("Market tasks are assigned by claiming them");
-  const team = await teamMemberIds(req.user);
-  if (!team.some((id) => sameId(id, req.params.id))) throw APIError.notFound("User not found in your team");
+  await assertTeamAssignee(req.user, req.params.id);
   const updated = await Task.findByIdAndUpdate(task._id, { assignee: req.params.id }, { returnDocument: "after" });
   res.status(200).send(updated);
 });
