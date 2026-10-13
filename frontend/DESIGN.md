@@ -157,7 +157,8 @@ Feature-level building blocks in `src/components/`:
 
 ## Data and the game backend
 
-- `useMe()` fetches `GET /me` and returns `{ profile, isLoading, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
+- `useMe()` fetches `GET /me` and returns `{ profile, isLoadError, isFirstLoad, refetch, isFetching, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
+- Any other `/me` failure (network, timeout, 5xx; transient ones are retried twice) sets `isLoadError`, which stays true through refetches until `/me` answers. Then the game is not "coming soon" and the role is unknown: show a "Couldn't load…" state with a Try again button that calls `refetch` (`loading={isFetching}`), and never fall back to worker UI or locked copy.
 - Gate a whole page on `useMe().isFirstLoad`, not `isLoading`: it is true only before `/me` has ever answered, so an error or a refetch never swaps the page for a skeleton. `/me` does not retry on mount.
 - A 401 on a signed-in request ends the session (`src/api/session.js`): the API client clears the token and cache, `PrivateRoute` sends you to `/login`, and a toast says why. `/auth/*` 401s (wrong password) stay with the form.
 - `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
@@ -203,7 +204,7 @@ Feature-level building blocks in `src/components/`:
 1. Build the page in `src/pages/` and swap it in for the `ComingSoonPage` route in `src/routes/AllRoutes.jsx`.
 2. Remove `soon: true` from its entry in `src/components/shell/nav.js`. Delete its entry from `FEATURES` in `ComingSoonPage.jsx`.
 3. Start with `PageHeader`; use `CreditAmount`, `RewardTierBadge`, `XpBar`, `StreakBadge`, `UserAvatar`, `EmptyState` and `ConfirmDialog` rather than new one-offs. If you need a new reusable piece, add it to `src/components/ui/` and to this file.
-4. Gate role-specific UI on `profile.role` (`manager` / `worker`) from `useMe`.
+4. Gate role-specific UI on `profile.role` (`manager` / `worker`) from `useMe`; while `isLoadError` is set, show the retry state instead of picking a role.
 5. Check it at 360x740, 390x844, 768x1024 and 1440x900, in light and dark.
 
 ## Copy
