@@ -110,22 +110,22 @@ npm i
 
 4. Set up the environment variables:
 
-- Create a `.env` file in both directories.
-- Provide the necessary environment variables, such as database connection details, JWT secret, etc.
+- Backend: copy `backend/.env.example` to `backend/.env` and fill it in (see the variable table under [Deploy to Vercel](#deploy-to-vercel)).
+- Frontend: create `frontend/.env` with `VITE_BACKEND_URL=http://localhost:3939/api`.
 
 5. Start the development servers:
 
 ```bash
 # Start the frontend server
 cd frontend
-npm start
+npm run dev
 
 # Start the backend server
-cd vackend
-npm start
+cd backend
+npm run dev
 ```
 
-6. (Optional) Load demo data into the database from `MONGO_URI`:
+6. (Optional) Load demo data into the database from `MONGO_URI` (or `MONGODB_URI`):
 
 ```bash
 cd backend
@@ -151,3 +151,41 @@ npm test
 8. Access the application in your web browser:
 
 Open your preferred web browser and visit `http://localhost:5173` to access the taskFlow application.
+
+## Deploy to Vercel
+
+The repo deploys as two Vercel projects from the same Git repository. Create each one with **Add New → Project**, import the repo, and set its **Root Directory**.
+
+### Backend project (Root Directory `backend`)
+
+`backend/api/index.js` is the serverless function and `backend/vercel.json` rewrites `/` and `/api/*` to it, so the routes stay at `https://<backend>.vercel.app/api/...`. Each instance connects to MongoDB once and reuses the connection on warm requests. If a required variable is missing, requests fail with `500 {"message":"Server is not configured"}` and the function log names the variable. If the database is unreachable, requests fail with `503`.
+
+Set these under **Settings → Environment Variables**, then redeploy:
+
+| Variable | Required | Value |
+| --- | --- | --- |
+| `MONGODB_URI` or `MONGO_URI` | yes | Atlas connection string, including the database name (e.g. `mongodb+srv://user:pass@cluster.mongodb.net/taskflow`). The Vercel MongoDB Atlas integration sets `MONGODB_URI` for you. If both are set, `MONGO_URI` wins. |
+| `JWT_SECRET` | yes | A long random value, e.g. the output of `openssl rand -base64 48`. Never reuse the example value. Changing it logs everyone out. |
+| `JWT_EXPIRATION_MINUTES` | no | Access token lifetime in minutes (default `15`). |
+| `CORS_ORIGIN` | no | Comma-separated allowed origins, e.g. `https://taskflow-one.vercel.app`. Unset allows every origin. |
+| `NODE_ENV` | no | Vercel already runs functions with `production`, which hides internal error details from responses. |
+
+**MongoDB Atlas:** Vercel functions have no fixed outbound IP. Under **Network Access**, add `0.0.0.0/0` (allow access from anywhere) so the function can connect. The integration may do this for you.
+
+**Demo data (one time):** load the demo accounts into Atlas from your laptop:
+
+```bash
+cd backend
+npm i
+MONGODB_URI='mongodb+srv://user:pass@cluster.mongodb.net/taskflow' npm run seed
+```
+
+### Frontend project (Root Directory `frontend`)
+
+Vercel detects Vite and builds `dist`. `frontend/vercel.json` rewrites every non-file path to `index.html`, so deep links such as `/market` load the app instead of a 404.
+
+| Variable | Required | Value |
+| --- | --- | --- |
+| `VITE_BACKEND_URL` | yes | The backend URL **including `/api`**, e.g. `https://<backend>.vercel.app/api`. |
+
+`VITE_BACKEND_URL` is compiled into the bundle, so redeploy the frontend after changing it. Then set the backend's `CORS_ORIGIN` to the frontend's URL.

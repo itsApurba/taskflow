@@ -5,7 +5,9 @@ const User = require("../api/models/user.model");
 
 const jwtConfig = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("Bearer"),
-  secretOrKey: jwtSecret,
+  // A provider, not secretOrKey, so a missing JWT_SECRET fails requests instead of the module load.
+  secretOrKeyProvider: (req, token, done) =>
+    jwtSecret ? done(null, jwtSecret) : done(new Error("JWT_SECRET is not set")),
 };
 
 const jwt = async (payload, done) => {
