@@ -118,11 +118,11 @@ npm i
 ```bash
 # Start the frontend server
 cd frontend
-npm start
+npm run dev
 
 # Start the backend server
-cd vackend
-npm start
+cd backend
+npm run dev
 ```
 
 6. (Optional) Load demo data into the database from `MONGO_URI`:
