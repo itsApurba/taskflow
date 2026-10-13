@@ -34,7 +34,8 @@ const Dashboard = () => {
       // Phones reach the market from the tab bar; here the next-up card leads.
       actionsProps={{ display: { base: "none", sm: "flex" } }}
       actions={
-        !isLoadError && (
+        // The CTA depends on the role, which is unknown until /me answers.
+        !isFirstLoad && !isLoadError && (
           <Button asChild>
             <Link to='/market'>
               {isManager ? (
