@@ -1,172 +1,221 @@
-import {
-  Button,
-  ButtonGroup,
-  Dialog,
-  Flex,
-  Grid,
-  Heading,
-  IconButton,
-  NativeSelect,
-  Portal,
-  Separator,
-  SimpleGrid,
-  Text,
-  VStack,
-  useDisclosure,
-} from "@chakra-ui/react";
-import { LuSquarePen, LuTrash2 } from "react-icons/lu";
-import React from "react";
+import { Box, Card, Flex, Grid, HStack, Heading, IconButton, Menu, NativeSelect, Portal, Text, useDisclosure } from "@chakra-ui/react";
+import { LuEllipsisVertical, LuSquarePen, LuTrash2, LuUserRound } from "react-icons/lu";
+import moment from "moment";
 import api from "../api/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import ConfirmDialog from "./ui/ConfirmDialog";
+import RewardTierBadge from "./ui/RewardTierBadge";
+import StatusBadge from "./ui/StatusBadge";
+import TaskTypeBadge from "./ui/TaskTypeBadge";
+import UserAvatar from "./ui/UserAvatar";
+import { toaster } from "./ui/toaster";
+import { BOARD_STATUSES, TASK_TYPES, assigneeId, getTaskStatus, isMarketTask, taskPath } from "../lib/game";
+
+// Keeps the selects and menu clickable above the card-wide title link.
+const raised = { position: "relative", zIndex: 1 };
+
+// The footer lays out by the card's own width (container queries), so it
+// stacks in narrow cards whether that is a phone or a two-column desktop grid.
+const wide = "@container (min-width: 34rem)";
 
 const TaskCard = ({ task, refetch }) => {
   const navigate = useNavigate();
   const { open, onOpen, onClose } = useDisclosure();
-  const cancelRef = React.useRef(null);
 
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/tasks/${task._id}`),
-    onSuccess: () => {
-      refetch();
+    onSuccess: async () => {
+      await refetch();
       onClose();
+      toaster.create({ title: "Task deleted", type: "success" });
     },
+    onError: () => toaster.create({ title: "Couldn't delete the task", type: "error" }),
   });
 
-  const handleTypeChange = async (e) => {
-    await api.post(`/tasks/type/${task._id}`, {
-      type: e.target.value,
-    });
-    refetch();
-    console.log(e.target.value);
-  };
-  const handleStatusChange = async (e) => {
-    await api.post(`/tasks/status/${task._id}`, {
-      status: e.target.value,
-    });
-    refetch();
-    console.log(e.target.value);
-  };
+  // The selects show the value being saved until the board refetches.
+  const statusMutation = useMutation({
+    mutationFn: (status) => api.post(`/tasks/status/${task._id}`, { status }),
+    onSuccess: () => refetch(),
+    onError: () => toaster.create({ title: "Couldn't change the status", type: "error" }),
+  });
+  const typeMutation = useMutation({
+    mutationFn: (type) => api.post(`/tasks/type/${task._id}`, { type }),
+    onSuccess: () => refetch(),
+    onError: () => toaster.create({ title: "Couldn't change the type", type: "error" }),
+  });
+  const status = statusMutation.isPending ? statusMutation.variables : task.status;
+  const type = typeMutation.isPending ? typeMutation.variables : task.type;
 
-  const handleDelete = async () => {
-    deleteMutation.mutate();
-    console.log(task);
-  };
-
+  const userId = assigneeId(task);
+  const populatedName = typeof task.assignee === "object" ? task.assignee?.name : undefined;
   const getAssignee = useQuery({
-    queryKey: ["assignee-data", task._id],
-    queryFn: () => api.get(`/users/${task.assignee}`),
+    queryKey: ["user", userId],
+    queryFn: () => api.get(`/users/${userId}`),
+    enabled: Boolean(userId) && !populatedName,
   });
+  const assigneeName = populatedName ?? getAssignee.data?.data.name;
 
-  console.log(task);
-  const handleEdit = () => {
-    navigate(`/task/${task._id}`, {
-      state: {
-        task,
-      },
-    });
-    // console.log(task);
-  };
+  // Market tasks (posted with a reward) move through claim/submit/approve, so
+  // the board's pickers, edit form and delete do not apply to them.
+  const isMarket = isMarketTask(task);
+  const editState = { task };
+  const handleEdit = () => navigate(`/task/${task._id}`, { state: editState });
+
   return (
-    <SimpleGrid my={4}>
-      {/* Phones: info and edit/delete share the top row, the selects get a full-width row below.
-          md and up: everything sits on one row, as before. */}
-      <Grid
-        w={"full"}
-        templateColumns={{ base: "minmax(0, 1fr) auto", md: "minmax(0, 1fr) auto auto" }}
-        templateAreas={{ base: `"info actions" "selects selects"`, md: `"info selects actions"` }}
-        columnGap={2}
-        rowGap={3}
-        alignItems={"center"}
-      >
-        <VStack gridArea={"info"} align={"flex-start"} minW={0}>
-          <Flex wrap={"wrap"} align={"center"} gap={2}>
-            <Heading as={"h3"} size={"xl"} overflowWrap={"anywhere"}>
-              {task.title}
-            </Heading>
-            <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"} whiteSpace={"nowrap"}>
-              {task.status}
+    <Card.Root
+      variant='outline'
+      position='relative'
+      css={{ containerType: "inline-size" }}
+      transition='transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease'
+      _hover={{ boxShadow: "card-hover", borderColor: "brand.muted" }}
+      animation='fade-up'
+    >
+      <Card.Body gap={3}>
+        <Flex justify='space-between' align='flex-start' gap={2}>
+          <Flex wrap='wrap' gap={1.5} minW={0}>
+            <StatusBadge status={status} />
+            <TaskTypeBadge type={type} />
+            {task.reward != null && <RewardTierBadge reward={task.reward} />}
+          </Flex>
+          {!isMarket && (
+            <Menu.Root positioning={{ placement: "bottom-end" }}>
+              <Menu.Trigger asChild>
+                <IconButton
+                  aria-label={`Actions for ${task.title}`}
+                  variant='ghost'
+                  colorPalette='gray'
+                  size='sm'
+                  rounded='full'
+                  mt={-1}
+                  me={-2}
+                  minW={{ base: 11, md: 9 }}
+                  h={{ base: 11, md: 9 }}
+                  {...raised}
+                >
+                  <LuEllipsisVertical />
+                </IconButton>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item value='edit' onClick={handleEdit}>
+                      <LuSquarePen /> Edit task
+                    </Menu.Item>
+                    <Menu.Item value='delete' color='fg.error' _highlighted={{ bg: "bg.error" }} onClick={onOpen}>
+                      <LuTrash2 /> Delete task
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+          )}
+        </Flex>
+
+        <Box minW={0}>
+          <Heading as='h3' fontSize='lg' fontWeight='700' lineHeight='1.3' overflowWrap='anywhere'>
+            <Box
+              asChild
+              // Stretched link: the whole card opens the task.
+              _after={{ content: '""', position: "absolute", inset: 0, borderRadius: "l3" }}
+              _focusVisible={{ outline: "none", _after: { outline: "2px solid", outlineColor: "brand.focusRing", outlineOffset: "2px" } }}
+            >
+              <Link to={taskPath(task)} state={editState}>
+                {task.title}
+              </Link>
+            </Box>
+          </Heading>
+          {task.description && (
+            <Text color='fg.muted' fontSize='sm' mt={1} lineClamp={2} overflowWrap='anywhere'>
+              {task.description}
             </Text>
-            {task.type && (
-              <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"} whiteSpace={"nowrap"}>
-                {task.type}
+          )}
+        </Box>
+
+        <Flex
+          justify='space-between'
+          gap={3}
+          pt={3}
+          borderTopWidth='1px'
+          borderColor='border'
+          css={{ flexDirection: "column", alignItems: "stretch", [wide]: { flexDirection: "row", alignItems: "center" } }}
+        >
+          <HStack gap={2} minW={0}>
+            {userId ? (
+              <UserAvatar name={assigneeName ?? ""} size='xs' />
+            ) : (
+              <Flex
+                boxSize={6}
+                rounded='full'
+                borderWidth='1.5px'
+                borderStyle='dashed'
+                borderColor='border.emphasized'
+                align='center'
+                justify='center'
+                color='fg.subtle'
+                flexShrink={0}
+              >
+                <LuUserRound size={12} />
+              </Flex>
+            )}
+            <Text fontSize='sm' fontWeight='medium' lineClamp={1} color={userId ? "fg" : "fg.muted"}>
+              {userId ? (assigneeName ?? "Assigned") : "Unassigned"}
+            </Text>
+            {task.updated_at && (
+              <Text fontSize='xs' color='fg.subtle' whiteSpace='nowrap' css={{ display: "none", "@container (min-width: 40rem)": { display: "block" } }}>
+                · {moment(task.updated_at).fromNow()}
               </Text>
             )}
-          </Flex>
-          <Text overflowWrap={"anywhere"}>{task.description}</Text>
-          {getAssignee?.data && <Text>Assignee: {getAssignee?.data?.data.name}</Text>}
-        </VStack>
-        <Grid gridArea={"selects"} templateColumns={{ base: "1fr 1fr", md: "auto auto" }} gap={2}>
-          <NativeSelect.Root w={{ md: "28" }}>
-            <NativeSelect.Field name='status' aria-label='Status' onChange={handleStatusChange}>
-              <option value=''>status</option>
-              <option value='not started'>Not Started</option>
-              <option value='in progress'>In Progress</option>
-              <option value='completed'>Completed</option>
-              <option value='closed'>Closed</option>{" "}
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
-          <NativeSelect.Root w={{ md: "28" }}>
-            <NativeSelect.Field name='type' aria-label='Type' onChange={handleTypeChange}>
-              <option value=''>Type</option>
-              <option value='bug'>Bug</option>
-              <option value='feature'>Feature</option>
-              <option value='story'>Story</option>
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
-        </Grid>
+          </HStack>
+          {!isMarket && (
+            <Grid templateColumns='repeat(2, minmax(0, 1fr))' gap={2} flexShrink={0} css={{ width: "100%", [wide]: { width: "auto" } }} {...raised}>
+              <NativeSelect.Root css={{ [wide]: { width: "9rem" } }}>
+                <NativeSelect.Field name='status' aria-label={`Status of ${task.title}`} value={status} onChange={(e) => statusMutation.mutate(e.target.value)}>
+                  {!BOARD_STATUSES.includes(status) && (
+                    <option value={status} disabled>
+                      {getTaskStatus(status).label}
+                    </option>
+                  )}
+                  {BOARD_STATUSES.map((value) => (
+                    <option key={value} value={value}>
+                      {getTaskStatus(value).label}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+              <NativeSelect.Root css={{ [wide]: { width: "8rem" } }}>
+                <NativeSelect.Field name='type' aria-label={`Type of ${task.title}`} value={type ?? ""} onChange={(e) => typeMutation.mutate(e.target.value)}>
+                  {!type && (
+                    <option value='' disabled>
+                      Set type
+                    </option>
+                  )}
+                  {Object.entries(TASK_TYPES).map(([value, meta]) => (
+                    <option key={value} value={value}>
+                      {meta.label}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Grid>
+          )}
+        </Flex>
+      </Card.Body>
 
-        <ButtonGroup gridArea={"actions"} alignSelf={{ base: "start", md: "center" }} justifyContent={"center"} py={{ md: 4 }}>
-          <IconButton aria-label='Edit task' onClick={handleEdit} color={"blue.500"}>
-            <LuSquarePen />
-          </IconButton>
-          <IconButton aria-label='Delete task' onClick={onOpen} color={"red.500"}>
-            <LuTrash2 />
-          </IconButton>
-        </ButtonGroup>
-      </Grid>
-      <Separator py={2} />
-
-      <Dialog.Root role='alertdialog' open={open} onOpenChange={(e) => !e.open && onClose()} initialFocusEl={() => cancelRef.current}>
-        <Portal>
-          <Dialog.Backdrop />
-          <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>
-                <Dialog.Title fontSize='lg' fontWeight='bold'>
-                  Delete Task
-                </Dialog.Title>
-              </Dialog.Header>
-
-              <Dialog.Body>Are you sure? You can't undo this action afterwards.</Dialog.Body>
-
-              <Dialog.Footer>
-                <Button ref={cancelRef} onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button loading={deleteMutation.isPending} variant='solid' colorPalette='red' onClick={handleDelete}>
-                  Delete
-                </Button>
-              </Dialog.Footer>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
-    </SimpleGrid>
+      <ConfirmDialog
+        open={open}
+        onClose={onClose}
+        onConfirm={() => deleteMutation.mutate()}
+        loading={deleteMutation.isPending}
+        title='Delete this task?'
+        description={`"${task.title}" will be removed for everyone. You can't undo this.`}
+        confirmLabel='Delete task'
+        icon={LuTrash2}
+      />
+    </Card.Root>
   );
 };
 
 export default TaskCard;
-
-// {
-//     "_id": "6471ad21bd4658827e2a7097",
-//     "title": "neadfa",
-//     "type": "feature",
-//     "description": "asdf",
-//     "status": "completed",
-//     "created_at": "2023-05-27T07:11:29.603Z",
-//     "updated_at": "2023-05-27T07:11:29.605Z",
-//     "__v": 0
-// }

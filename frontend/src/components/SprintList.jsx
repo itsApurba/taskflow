@@ -1,32 +1,24 @@
-import { Box, Flex, Separator, SimpleGrid, Spinner } from "@chakra-ui/react";
-import { useColorModeValue } from "../hooks/useColorMode";
-import { useQuery } from "@tanstack/react-query";
-import api from "../api/api";
+import { SimpleGrid, Skeleton } from "@chakra-ui/react";
 import SprintCard from "./SprintCard";
+import { sortSprints } from "../lib/sprints";
 
-const SprintList = () => {
-  const { isLoading, data, refetch } = useQuery({
-    queryKey: ["sprints"],
-    queryFn: async () => {
-      const res = await api.get("/sprints");
-      return res.data;
-    },
-  });
-  return (
-    <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 4, md: 8 }} mb={8}>
-      <Separator />
-      <SimpleGrid mt={4} columns={{ base: 1, sm: 2, lg: 3 }} rowGap={8} columnGap={4}>
-        {isLoading ? (
-          <Flex w={"full"}>
-            <Spinner />
-          </Flex>
-        ) : (
-          data?.map((sprint) => {
-            return <SprintCard key={sprint._id} sprint={sprint} refetch={refetch} />;
-          })
-        )}
+const SprintList = ({ sprints, isLoading, refetch, empty }) => {
+  if (isLoading) {
+    return (
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={4}>
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} h='52' rounded='l3' />
+        ))}
       </SimpleGrid>
-    </Box>
+    );
+  }
+  if (!sprints?.length) return empty ?? null;
+  return (
+    <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={4}>
+      {sortSprints(sprints).map((sprint) => (
+        <SprintCard key={sprint._id} sprint={sprint} refetch={refetch} />
+      ))}
+    </SimpleGrid>
   );
 };
 

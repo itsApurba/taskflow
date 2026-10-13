@@ -12,8 +12,3 @@ export function useColorMode() {
     toggleColorMode,
   };
 }
-
-export function useColorModeValue(light, dark) {
-  const { colorMode } = useColorMode();
-  return colorMode === "dark" ? dark : light;
-}
