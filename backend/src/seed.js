@@ -1,9 +1,10 @@
 /**
- * Demo data: a manager, three workers, an open market, task history, store
- * items, a redemption and penalties. Run with `npm run seed`.
+ * Demo data: a manager, three workers, an open market, task history, a demo
+ * sprint, store items, a redemption and penalties. Run with `npm run seed`.
  *
  * Only accounts on the @taskflow.demo domain (and their tasks, ledger,
- * penalties, rewards and redemptions) are replaced; other data is left alone.
+ * penalties, rewards and redemptions) and the sprint named DEMO_SPRINT are
+ * replaced; other data is left alone.
  */
 const mongoose = require("mongoose");
 const db = require("./config/mongoose");
@@ -19,6 +20,7 @@ const { payTaskReward, debit, recordSpend } = require("./api/services/credits");
 
 const DEMO_EMAIL = /@taskflow\.demo$/;
 const PASSWORD = "taskflow123";
+const DEMO_SPRINT = "Demo sprint";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const daysAgo = (n) => new Date(Date.now() - n * DAY_MS);
 
@@ -82,17 +84,17 @@ async function seed() {
   await seedTask(manager, { title: "Set up CI pipeline", type: "feature", reward: 150 }, { assignee: asha, status: "done", approvedDaysAgo: 9 });
   await seedTask(manager, { title: "Fix flaky login test", type: "bug", reward: 60 }, { assignee: vikram, status: "done", approvedDaysAgo: 5 });
   await seedTask(manager, { title: "Write onboarding guide", type: "story", reward: 90 }, { assignee: asha, status: "done", approvedDaysAgo: 2 });
-  await seedTask(manager, { title: "Dark mode for dashboard", type: "feature", reward: 120 }, { assignee: asha, status: "done", approvedDaysAgo: 1 });
-  await seedTask(manager, { title: "Sprint burndown chart", type: "feature", reward: 200 }, { assignee: meera, status: "done", approvedDaysAgo: 0 });
-  await seedTask(manager, { title: "Fix date picker timezone", type: "bug", reward: 70 }, { assignee: vikram, status: "in review" });
-  await seedTask(
+  const darkMode = await seedTask(manager, { title: "Dark mode for dashboard", type: "feature", reward: 120 }, { assignee: asha, status: "done", approvedDaysAgo: 1 });
+  const burndown = await seedTask(manager, { title: "Sprint burndown chart", type: "feature", reward: 200 }, { assignee: meera, status: "done", approvedDaysAgo: 0 });
+  const datePicker = await seedTask(manager, { title: "Fix date picker timezone", type: "bug", reward: 70 }, { assignee: vikram, status: "in review" });
+  const search = await seedTask(
     manager,
     { title: "Improve search relevance", type: "story", reward: 110 },
     { assignee: meera, status: "in progress", reviewNote: "Please add tests for empty queries" }
   );
 
   // Open market.
-  await Task.create(
+  const [csvExport, emptySprint] = await Task.create(
     [
       { title: "Add CSV export to reports", type: "feature", reward: 80, description: "Managers want to download sprint reports." },
       { title: "Crash when sprint has no tasks", type: "bug", reward: 50, description: "Opening an empty sprint throws." },
@@ -100,6 +102,21 @@ async function seed() {
       { title: "Audit npm dependencies", type: "bug", reward: 40 },
       { title: "Profile page avatars", type: "feature", reward: 70 },
     ].map((task) => ({ ...task, createdBy: manager._id, status: "open" }))
+  );
+
+  // The current sprint: a mix of done, in-flight and open work. Upserted by
+  // name so re-running the seed refills it instead of adding another sprint.
+  await Sprint.findOneAndUpdate(
+    { name: DEMO_SPRINT },
+    {
+      $set: {
+        startDate: daysAgo(3),
+        endDate: daysAgo(-11),
+        tasks: [darkMode, burndown, datePicker, search, csvExport, emptySprint].map((task) => task._id),
+        updated_at: new Date(),
+      },
+    },
+    { upsert: true }
   );
 
   // Store.

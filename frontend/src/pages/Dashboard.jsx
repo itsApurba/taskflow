@@ -81,7 +81,7 @@ const Dashboard = () => {
   }
 
   if (isManager) return <ManagerHome header={header} />;
-  return <WorkerHome profile={profile} tasks={tasks.data ?? []} isLoading={tasks.isLoading} refetch={tasks.refetch} header={header} />;
+  return <WorkerHome profile={profile} tasks={tasks.data ?? []} isLoading={tasks.isLoading} header={header} />;
 };
 
 export default Dashboard;

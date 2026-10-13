@@ -130,7 +130,7 @@ cd backend
 npm run seed
 ```
 
-This creates the four demo accounts above with tasks, rewards, redemptions and penalties. It replaces only the `@taskflow.demo` accounts and their data, so run it again any time to reset the demo.
+This creates the four demo accounts above with tasks, rewards, redemptions and penalties, plus a sprint named "Demo sprint" holding six of those tasks. It replaces only the `@taskflow.demo` accounts, their data and that sprint, so run it again any time to reset the demo.
 
 ### 4. Run it
 

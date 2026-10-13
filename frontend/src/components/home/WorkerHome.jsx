@@ -1,5 +1,5 @@
 import { Box, Button, Flex, Grid, HStack, Heading, Icon, Progress, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import {
   LuCheck,
@@ -40,12 +40,13 @@ const NEXT_STEP = {
   "in progress": { status: "completed", label: "Mark completed", icon: LuCheck, done: "Nice work! Task completed." },
 };
 
-const NextUpCard = ({ task, refetch }) => {
+const NextUpCard = ({ task }) => {
+  const queryClient = useQueryClient();
   const step = !isMarketTask(task) ? NEXT_STEP[task.status] : undefined;
   const advance = useMutation({
     mutationFn: () => api.post(`/tasks/status/${task._id}`, { status: step.status }),
     onSuccess: async () => {
-      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toaster.create({ title: step.done, type: "success" });
     },
     onError: () => toaster.create({ title: "Couldn't update the task", type: "error" }),
@@ -215,7 +216,7 @@ const summaryFor = ({ isLoading, active, todo, review }) => {
 
 // What a worker should do next: the task in hand, penalties to clear, tasks up
 // for grabs and how close they are to a reward.
-const WorkerHome = ({ profile, tasks, isLoading, refetch, header }) => {
+const WorkerHome = ({ profile, tasks, isLoading, header }) => {
   const { userId } = useAuth();
   const sprints = useSprints();
   const hasGame = Boolean(profile);
@@ -249,7 +250,7 @@ const WorkerHome = ({ profile, tasks, isLoading, refetch, header }) => {
           {isLoading ? (
             <Skeleton h='52' rounded='l3' />
           ) : nextUp ? (
-            <NextUpCard task={nextUp} refetch={refetch} />
+            <NextUpCard task={nextUp} />
           ) : (
             <EmptyState
               icon={LuPartyPopper}

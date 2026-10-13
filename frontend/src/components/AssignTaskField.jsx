@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../api/api";
 import { LuSearch, LuX } from "react-icons/lu";
 import useOutsideClick from "../hooks/useOutsideClick";
+import useUser from "../hooks/useUser";
 import { SearchMenu, SearchMenuItem } from "./SearchMenu";
 import UserAvatar from "./ui/UserAvatar";
 
@@ -35,12 +36,8 @@ const AssignTaskField = ({ name = "assignee" }) => {
   });
 
   // Editing an existing task: look up the assignee's name from their id.
-  const current = useQuery({
-    queryKey: ["user", assignee],
-    queryFn: () => api.get(`/users/${assignee}`),
-    enabled: Boolean(assignee) && picked?._id !== assignee,
-  });
-  const assigneeName = picked?._id === assignee ? picked.name : current.data?.data.name;
+  const current = useUser(assignee, { enabled: picked?._id !== assignee });
+  const assigneeName = picked?._id === assignee ? picked.name : current.data?.name;
 
   const pick = (user) => {
     setPicked(user);

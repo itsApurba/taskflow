@@ -2,8 +2,9 @@ import { Box, Card, Flex, Grid, HStack, Heading, IconButton, Menu, NativeSelect,
 import { LuEllipsisVertical, LuSquarePen, LuTrash2, LuUserRound } from "react-icons/lu";
 import moment from "moment";
 import api from "../api/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
+import useUser from "../hooks/useUser";
 import ConfirmDialog from "./ui/ConfirmDialog";
 import RewardTierBadge from "./ui/RewardTierBadge";
 import StatusBadge from "./ui/StatusBadge";
@@ -19,14 +20,17 @@ const raised = { position: "relative", zIndex: 1 };
 // stacks in narrow cards whether that is a phone or a two-column desktop grid.
 const wide = "@container (min-width: 34rem)";
 
-const TaskCard = ({ task, refetch }) => {
+const TaskCard = ({ task }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  // Board tasks also show up in "my tasks" and on their own page.
+  const refreshTasks = () => queryClient.invalidateQueries({ queryKey: ["tasks"] });
   const { open, onOpen, onClose } = useDisclosure();
 
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/tasks/${task._id}`),
     onSuccess: async () => {
-      await refetch();
+      await refreshTasks();
       onClose();
       toaster.create({ title: "Task deleted", type: "success" });
     },
@@ -36,12 +40,12 @@ const TaskCard = ({ task, refetch }) => {
   // The selects show the value being saved until the board refetches.
   const statusMutation = useMutation({
     mutationFn: (status) => api.post(`/tasks/status/${task._id}`, { status }),
-    onSuccess: () => refetch(),
+    onSuccess: () => refreshTasks(),
     onError: () => toaster.create({ title: "Couldn't change the status", type: "error" }),
   });
   const typeMutation = useMutation({
     mutationFn: (type) => api.post(`/tasks/type/${task._id}`, { type }),
-    onSuccess: () => refetch(),
+    onSuccess: () => refreshTasks(),
     onError: () => toaster.create({ title: "Couldn't change the type", type: "error" }),
   });
   const status = statusMutation.isPending ? statusMutation.variables : task.status;
@@ -49,12 +53,8 @@ const TaskCard = ({ task, refetch }) => {
 
   const userId = assigneeId(task);
   const populatedName = typeof task.assignee === "object" ? task.assignee?.name : undefined;
-  const getAssignee = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => api.get(`/users/${userId}`),
-    enabled: Boolean(userId) && !populatedName,
-  });
-  const assigneeName = populatedName ?? getAssignee.data?.data.name;
+  const getAssignee = useUser(userId, { enabled: !populatedName });
+  const assigneeName = populatedName ?? getAssignee.data?.name;
 
   // Market tasks (posted with a reward) move through claim/submit/approve, so
   // the board's pickers, edit form and delete do not apply to them.
