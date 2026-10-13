@@ -9,6 +9,10 @@ import Dashboard from "../pages/Dashboard";
 import TasksPage from "../pages/TasksPage";
 import SprintsPage from "../pages/SprintsPage";
 import ComingSoonPage from "../pages/ComingSoonPage";
+import WalletPage from "../pages/WalletPage";
+import StorePage from "../pages/StorePage";
+import RedemptionsPage from "../pages/RedemptionsPage";
+import PenaltiesPage from "../pages/PenaltiesPage";
 import AppShell from "../components/shell/AppShell";
 import AuthLayout from "../components/shell/AuthLayout";
 
@@ -33,8 +37,10 @@ const AllRoutes = () => {
         <Route path='/sprint/:id' element={<CreateSprint />} />
         {/* Placeholders until the game screens are built; replace each with its page. */}
         <Route path='/market' element={<ComingSoonPage key='market' feature='market' />} />
-        <Route path='/wallet' element={<ComingSoonPage key='wallet' feature='wallet' />} />
-        <Route path='/store' element={<ComingSoonPage key='store' feature='store' />} />
+        <Route path='/wallet' element={<WalletPage />} />
+        <Route path='/store' element={<StorePage />} />
+        <Route path='/store/redemptions' element={<RedemptionsPage />} />
+        <Route path='/store/penalties' element={<PenaltiesPage />} />
         <Route path='/leaderboard' element={<ComingSoonPage key='leaderboard' feature='leaderboard' />} />
         <Route path='/profile' element={<ComingSoonPage key='profile' feature='profile' />} />
       </Route>

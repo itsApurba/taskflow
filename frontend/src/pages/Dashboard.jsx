@@ -16,9 +16,11 @@ import StatusBadge from "../components/ui/StatusBadge";
 import TaskTypeBadge from "../components/ui/TaskTypeBadge";
 import { toaster } from "../components/ui/toaster";
 import useAuth from "../hooks/useAuth";
+import useMe from "../hooks/useMe";
+import useRewards from "../hooks/useRewards";
 import useSprints from "../hooks/useSprints";
 import useTasks from "../hooks/useTasks";
-import { SAMPLE_REWARDS, assigneeId, firstName, getTaskStatus, isMarketTask, taskPath } from "../lib/game";
+import { SAMPLE_REWARDS, assigneeId, firstName, formatNumber, getTaskStatus, isMarketTask, taskPath } from "../lib/game";
 import { formatSprintDates, sortSprints, sprintPhase } from "../lib/sprints";
 
 const greeting = () => {
@@ -154,38 +156,60 @@ const SprintsPanel = ({ sprints, isLoading }) => {
   );
 };
 
-const StoreTeaser = () => (
-  <Box layerStyle='panel' p={{ base: 4, md: 5 }}>
-    <Flex justify='space-between' align='center' mb={3} gap={2}>
-      <HStack gap={2}>
-        <Flex colorPalette='coin' boxSize={8} rounded='l2' bg='colorPalette.subtle' color='colorPalette.fg' align='center' justify='center'>
-          <LuGift />
-        </Flex>
-        <Heading as='h3' fontSize='lg' fontWeight='700'>
-          Rewards store
-        </Heading>
-      </HStack>
-      <Badge variant='outline' colorPalette='gray' size='sm'>
-        Soon
-      </Badge>
-    </Flex>
-    <Stack gap={2}>
-      {SAMPLE_REWARDS.map((reward) => (
-        <Flex key={reward.title} justify='space-between' align='center' gap={3} bg='bg.subtle' rounded='l2' px={3} py={2.5}>
-          <Text fontSize='sm' fontWeight='medium' lineClamp={1}>
-            {reward.title}
-          </Text>
-          <HStack gap={1} color='coin.fg' fontWeight='bold' fontSize='sm' flexShrink={0} fontVariantNumeric='tabular-nums'>
-            <CoinIcon boxSize={4} /> {reward.cost.toLocaleString()}
-          </HStack>
-        </Flex>
-      ))}
-    </Stack>
-    <Text fontSize='xs' color='fg.muted' mt={3}>
-      Examples. Your manager stocks the real rewards.
-    </Text>
-  </Box>
-);
+// Live rewards once the game backend is on; examples (marked "Soon") before that.
+const StoreTeaser = () => {
+  const { profile } = useMe();
+  const rewards = useRewards({ enabled: Boolean(profile) });
+  const live = profile ? (rewards.data ?? []).filter((reward) => reward.active).slice(0, 3) : SAMPLE_REWARDS;
+  return (
+    <Box layerStyle='panel' p={{ base: 4, md: 5 }}>
+      <Flex justify='space-between' align='center' mb={3} gap={2}>
+        <HStack gap={2}>
+          <Flex colorPalette='coin' boxSize={8} rounded='l2' bg='colorPalette.subtle' color='colorPalette.fg' align='center' justify='center'>
+            <LuGift />
+          </Flex>
+          <Heading as='h3' fontSize='lg' fontWeight='700'>
+            Rewards store
+          </Heading>
+        </HStack>
+        {profile ? (
+          <Button asChild variant='ghost' size='sm' colorPalette='brand' mr={-2} minH={{ base: 11, md: 9 }}>
+            <Link to='/store'>Visit store</Link>
+          </Button>
+        ) : (
+          <Badge variant='outline' colorPalette='gray' size='sm'>
+            Soon
+          </Badge>
+        )}
+      </Flex>
+      {profile && rewards.isLoading ? (
+        <Skeleton h='28' rounded='l2' />
+      ) : live.length === 0 ? (
+        <Text fontSize='sm' color='fg.muted'>
+          {profile?.role === "manager" ? "Your store is empty. Stock a reward for the team." : "No rewards in the store yet."}
+        </Text>
+      ) : (
+        <Stack gap={2}>
+          {live.map((reward) => (
+            <Flex key={reward.title} justify='space-between' align='center' gap={3} bg='bg.subtle' rounded='l2' px={3} py={2.5}>
+              <Text fontSize='sm' fontWeight='medium' lineClamp={1}>
+                {reward.title}
+              </Text>
+              <HStack gap={1} color='coin.fg' fontWeight='bold' fontSize='sm' flexShrink={0} fontVariantNumeric='tabular-nums'>
+                <CoinIcon boxSize={4} /> {formatNumber(reward.cost)}
+              </HStack>
+            </Flex>
+          ))}
+        </Stack>
+      )}
+      {!profile && (
+        <Text fontSize='xs' color='fg.muted' mt={3}>
+          Examples. Your manager stocks the real rewards.
+        </Text>
+      )}
+    </Box>
+  );
+};
 
 const Dashboard = () => {
   const { userName, userId } = useAuth();

@@ -17,6 +17,7 @@ TaskFlow is a gamified Jira. People claim tasks like loot, earn credits when the
 | `src/theme.js` | Chakra UI 3 system: tokens, semantic tokens, text/layer styles, keyframes, recipe overrides |
 | `src/lib/game.js` | Game vocabulary: reward tiers, task statuses and lanes, task types, level maths, number formatting |
 | `src/lib/sprints.js` | Sprint phase (upcoming/active/ended), sorting, date range text |
+| `src/lib/store.js` | Wallet and store vocabulary: ledger kinds, redemption statuses, reward icons, stock helpers, `apiErrorMessage` |
 | `src/components/ui/` | Reusable presentational components (no data fetching except where noted) |
 | `src/components/shell/` | App chrome: `AppShell`, `TopBar`, `Sidebar`, `BottomNav`, `AuthLayout`, `UserMenu`, `CreditPill`, `Logo`, and `nav.js` |
 | `src/components/` | Feature components: task/sprint cards, lists, forms, pickers, `PlayerCard`, `TaskRow` |
@@ -143,6 +144,8 @@ Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the das
 | `UserAvatar` | Initials avatar, stable colour per name | `name`, `size` |
 | `PasswordInput` | Password with show/hide; works as a Formik `Field as` | input props |
 | `toaster` | `toaster.create({ title, description, type })` | Panel-coloured toasts with a coloured edge; they sit above the phone tab bar |
+| `SegmentedNav` | Pill switch between sibling routes (like `BoardTabs`), with optional count badges | `tabs` (`to`, `label`, `shortLabel` for phones, `count`, `palette`, `end`), `label` |
+| `CoinBurst` | Short coin-burst celebration in the middle of the screen for payouts and purchases; decorative, pair it with a toast | `burst` from `const [burst, fire] = useCoinBurst()`; call `fire("Redeemed!")` |
 
 Feature-level building blocks in `src/components/`:
 
@@ -150,12 +153,14 @@ Feature-level building blocks in `src/components/`:
 - `TaskRow`: compact, tappable task line for dashboards, sprint details and future lists.
 - `TaskCard` / `TaskList`, `SprintCard` / `SprintList`, `BoardTabs`.
 - `shell/CreditPill`: the always-visible balance in the top bar, linking to `/wallet`.
+- Store and wallet: `StoreTabs` (Rewards `/store`, Redemptions `/store/redemptions`, Penalties `/store/penalties`), `RewardCard` (loot-style store item; Redeem or manage menu), `RewardFormDialog`, `RedemptionRow`, `PenaltyCard`, `PenaltyFormDialog`, `LedgerList` (wallet history grouped by day) and `EconomyStates` (loading, error, locked and no-manager states).
 
 ## Data and the game backend
 
 - `useMe()` fetches `GET /me` and returns `{ profile, isLoading, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
 - `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
 - An assignee can be an id or a populated user; use `assigneeId(task)`.
+- Store and wallet caches: `useWallet` (`["wallet"]`), `useRewards` (`["rewards"]`), `useRedemptions` (`["redemptions"]`), `usePenalties` (`["penalties"]`), `useTeam` (`["team"]`, managers). A redemption invalidates `me`, `wallet`, `rewards` and `redemptions`; clearing a penalty invalidates `me`, `wallet` and `penalties`.
 
 ## Layout
 
