@@ -158,6 +158,8 @@ Feature-level building blocks in `src/components/`:
 ## Data and the game backend
 
 - `useMe()` fetches `GET /me` and returns `{ profile, isLoading, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
+- Gate a whole page on `useMe().isFirstLoad`, not `isLoading`: it is true only before `/me` has ever answered, so an error or a refetch never swaps the page for a skeleton. `/me` does not retry on mount.
+- A 401 on a signed-in request ends the session (`src/api/session.js`): the API client clears the token and cache, `PrivateRoute` sends you to `/login`, and a toast says why. `/auth/*` 401s (wrong password) stay with the form.
 - `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
 - `useGameQueries` keeps raw API responses under `["leaderboard", period]`, `["team"]`, `["tasks", "mine"]`, `["tasks", "review"]`, `["rewards"]`, `["redemptions"]` and `["penalties"]`. A screen that changes that data invalidates the matching key (and `["leaderboard"]` after an approval), so Home, Profile and the leaderboard stay current.
 - An assignee can be an id or a populated user; use `assigneeId(task)`.

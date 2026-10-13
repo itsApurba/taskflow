@@ -264,7 +264,7 @@ const WorkerStats = ({ profile, tasksDone, rankEntry, teamCount, loadingTasks })
 
 const ProfilePage = () => {
   const { userName, userEmail, userId } = useAuth();
-  const { profile, isLoading } = useMe();
+  const { profile, isFirstLoad } = useMe();
   const isManager = profile?.role === "manager";
   const isWorker = profile?.role === "worker";
   const myTasks = useMyTasks({ enabled: Boolean(profile) });
@@ -274,7 +274,7 @@ const ProfilePage = () => {
   const tasks = myTasks.data ?? [];
   const entries = leaderboard.data?.entries ?? [];
 
-  if (isLoading) {
+  if (isFirstLoad) {
     return (
       <>
         <PageHeader eyebrow='Your profile' title='Profile' />

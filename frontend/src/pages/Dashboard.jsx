@@ -21,7 +21,7 @@ const greeting = () => {
 // team, workers their next task, penalties and reward goals.
 const Dashboard = () => {
   const { userName } = useAuth();
-  const { profile, isLoading: profileLoading } = useMe();
+  const { profile, isFirstLoad } = useMe();
   const tasks = useTasks();
   const isManager = profile?.role === "manager";
 
@@ -50,7 +50,7 @@ const Dashboard = () => {
     />
   );
 
-  if (profileLoading) {
+  if (isFirstLoad) {
     return (
       <>
         {header("Loading your board…")}

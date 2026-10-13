@@ -12,10 +12,17 @@ const useMe = () => {
     queryFn: async () => (await api.get("/me")).data,
     enabled: isLoggedIn,
     retry: false,
+    // A failed /me stays failed until something refetches it on purpose.
+    // Otherwise every newly mounted widget re-runs it, flipping the query
+    // back to loading, which made pages gated on loading blink.
+    retryOnMount: false,
     staleTime: 30_000,
   });
   const profile = query.data && typeof query.data.credits === "number" ? query.data : null;
-  return { ...query, profile };
+  // True only before /me has ever answered. Use it to gate a whole page, so
+  // an error or a background refetch never swaps the page for a skeleton.
+  const isFirstLoad = query.isLoading && query.dataUpdatedAt === 0 && query.errorUpdatedAt === 0;
+  return { ...query, profile, isFirstLoad };
 };
 
 export default useMe;
