@@ -14,10 +14,10 @@ const ShowTasks = ({ task }) => {
   const navigate = useNavigate();
   console.log(data);
   return (
-    <Box my={4} rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
+    <Box my={4} rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 5, md: 8 }}>
       <VStack>
-        <Heading size={"4xl"}>Name: {data?.title}</Heading>
-        <Text>Description: {data?.description}</Text>
+        <Heading size={{ base: "2xl", md: "4xl" }} overflowWrap={"anywhere"}>Name: {data?.title}</Heading>
+        <Text overflowWrap={"anywhere"}>Description: {data?.description}</Text>
         <Text>Type: {data?.type}</Text>
         <Text>Status: {data?.status}</Text>
         <ButtonGroup>

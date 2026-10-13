@@ -13,9 +13,9 @@ const SprintList = () => {
     },
   });
   return (
-    <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8} mb={8}>
+    <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 4, md: 8 }} mb={8}>
       <Separator />
-      <SimpleGrid mt={4} columns={[1,2,3,3]} rowGap={8} columnGap={4}>
+      <SimpleGrid mt={4} columns={{ base: 1, sm: 2, lg: 3 }} rowGap={8} columnGap={4}>
         {isLoading ? (
           <Flex w={"full"}>
             <Spinner />

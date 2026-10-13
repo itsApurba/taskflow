@@ -26,7 +26,7 @@ export const SearchMenu = ({ children }) => {
 
 export const SearchMenuItem = ({ children, onClick }) => {
   return (
-    <Flex as='button' type='button' role='menuitem' w='full' align='center' gap={2} px={3} py={1.5} textAlign='start' cursor='pointer' _hover={{ bg: "bg.muted" }} onClick={onClick}>
+    <Flex as='button' type='button' role='menuitem' w='full' minH={{ base: 11, md: "auto" }} align='center' gap={2} px={3} py={1.5} textAlign='start' cursor='pointer' _hover={{ bg: "bg.muted" }} onClick={onClick}>
       {children}
     </Flex>
   );

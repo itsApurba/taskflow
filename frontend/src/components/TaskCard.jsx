@@ -2,7 +2,8 @@ import {
   Button,
   ButtonGroup,
   Dialog,
-  HStack,
+  Flex,
+  Grid,
   Heading,
   IconButton,
   NativeSelect,
@@ -68,27 +69,36 @@ const TaskCard = ({ task, refetch }) => {
   };
   return (
     <SimpleGrid my={4}>
-      <HStack w={"full"} justify={"space-between"}>
-        <VStack align={"flex-start"}>
-          <HStack>
-            <Heading as={"h3"} size={"xl"}>
+      {/* Phones: info and edit/delete share the top row, the selects get a full-width row below.
+          md and up: everything sits on one row, as before. */}
+      <Grid
+        w={"full"}
+        templateColumns={{ base: "minmax(0, 1fr) auto", md: "minmax(0, 1fr) auto auto" }}
+        templateAreas={{ base: `"info actions" "selects selects"`, md: `"info selects actions"` }}
+        columnGap={2}
+        rowGap={3}
+        alignItems={"center"}
+      >
+        <VStack gridArea={"info"} align={"flex-start"} minW={0}>
+          <Flex wrap={"wrap"} align={"center"} gap={2}>
+            <Heading as={"h3"} size={"xl"} overflowWrap={"anywhere"}>
               {task.title}
             </Heading>
-            <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"}>
+            <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"} whiteSpace={"nowrap"}>
               {task.status}
             </Text>
             {task.type && (
-              <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"}>
+              <Text textTransform={"capitalize"} fontSize={"sm"} borderWidth={"1px"} px={2} rounded={"full"} whiteSpace={"nowrap"}>
                 {task.type}
               </Text>
             )}
-          </HStack>
-          <Text>{task.description}</Text>
+          </Flex>
+          <Text overflowWrap={"anywhere"}>{task.description}</Text>
           {getAssignee?.data && <Text>Assignee: {getAssignee?.data?.data.name}</Text>}
         </VStack>
-        <HStack>
-          <NativeSelect.Root>
-            <NativeSelect.Field name='status' onChange={handleStatusChange}>
+        <Grid gridArea={"selects"} templateColumns={{ base: "1fr 1fr", md: "auto auto" }} gap={2}>
+          <NativeSelect.Root w={{ md: "28" }}>
+            <NativeSelect.Field name='status' aria-label='Status' onChange={handleStatusChange}>
               <option value=''>status</option>
               <option value='not started'>Not Started</option>
               <option value='in progress'>In Progress</option>
@@ -97,8 +107,8 @@ const TaskCard = ({ task, refetch }) => {
             </NativeSelect.Field>
             <NativeSelect.Indicator />
           </NativeSelect.Root>
-          <NativeSelect.Root>
-            <NativeSelect.Field name='type' onChange={handleTypeChange}>
+          <NativeSelect.Root w={{ md: "28" }}>
+            <NativeSelect.Field name='type' aria-label='Type' onChange={handleTypeChange}>
               <option value=''>Type</option>
               <option value='bug'>Bug</option>
               <option value='feature'>Feature</option>
@@ -106,17 +116,17 @@ const TaskCard = ({ task, refetch }) => {
             </NativeSelect.Field>
             <NativeSelect.Indicator />
           </NativeSelect.Root>
+        </Grid>
 
-          <ButtonGroup justifyContent={"center"} py={4}>
-            <IconButton onClick={handleEdit} color={"blue.500"}>
-              <LuSquarePen />
-            </IconButton>
-            <IconButton onClick={onOpen} color={"red.500"}>
-              <LuTrash2 />
-            </IconButton>
-          </ButtonGroup>
-        </HStack>
-      </HStack>
+        <ButtonGroup gridArea={"actions"} alignSelf={{ base: "start", md: "center" }} justifyContent={"center"} py={{ md: 4 }}>
+          <IconButton aria-label='Edit task' onClick={handleEdit} color={"blue.500"}>
+            <LuSquarePen />
+          </IconButton>
+          <IconButton aria-label='Delete task' onClick={onOpen} color={"red.500"}>
+            <LuTrash2 />
+          </IconButton>
+        </ButtonGroup>
+      </Grid>
       <Separator py={2} />
 
       <Dialog.Root role='alertdialog' open={open} onOpenChange={(e) => !e.open && onClose()} initialFocusEl={() => cancelRef.current}>
