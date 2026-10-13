@@ -21,4 +21,25 @@ async function findTeamMember(managerId, userId) {
   return member;
 }
 
-module.exports = { idOf, sameId, teamManagerId, findTeamMember };
+/**
+ * Ids of everyone in the user's team: the manager plus everyone reporting to
+ * them. A worker with no manager is a team of one.
+ */
+async function teamMemberIds(user) {
+  const managerId = teamManagerId(user);
+  if (!managerId) return [user._id];
+  const reports = await User.find({ reportsTo: managerId }).select("_id");
+  return [managerId, ...reports.map((r) => r._id)];
+}
+
+/**
+ * Query filter for the tasks a user may see: their team manager's market
+ * tasks, plus legacy tasks (no `createdBy`) assigned to someone in the team.
+ */
+async function teamTaskFilter(user) {
+  const managerId = teamManagerId(user);
+  const legacy = { createdBy: null, assignee: { $in: await teamMemberIds(user) } };
+  return managerId ? { $or: [{ createdBy: managerId }, legacy] } : legacy;
+}
+
+module.exports = { idOf, sameId, teamManagerId, findTeamMember, teamMemberIds, teamTaskFilter };

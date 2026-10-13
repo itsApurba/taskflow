@@ -12,14 +12,43 @@ const { levelForXp, nextStreak } = require("../utils/gamification");
 
 const isDuplicateKey = (error) => error && error.code === 11000;
 
+const STATS_ATTEMPTS = 10;
+
+/**
+ * Adds a task reward to the user's balance and XP and updates level and
+ * streak in one write. The write only applies if XP and streak are still what
+ * was read, so concurrent approvals for the same worker retry instead of
+ * saving a level or streak computed from stale values.
+ */
+async function addReward(userId, reward, now) {
+  for (let attempt = 0; attempt < STATS_ATTEMPTS; attempt += 1) {
+    const user = await User.findById(userId).select("xp streak lastApprovedAt");
+    if (!user) return;
+    const xp = user.xp + reward;
+    const lastApprovedAt = user.lastApprovedAt && user.lastApprovedAt > now ? user.lastApprovedAt : now;
+    const result = await User.updateOne(
+      { _id: userId, xp: user.xp, streak: user.streak, lastApprovedAt: user.lastApprovedAt },
+      {
+        $inc: { credits: reward },
+        $set: { xp, level: levelForXp(xp), streak: nextStreak(user.streak, user.lastApprovedAt, now), lastApprovedAt },
+      }
+    );
+    if (result.matchedCount === 1) return;
+  }
+  throw APIError.conflict("The worker's stats changed too often to update, please retry");
+}
+
 /**
  * Pays an approved task's reward to its assignee: ledger entry, balance, XP,
- * level and streak. Calling it again for the same task is a no-op.
+ * level and streak. Calling it again for the same task is a no-op. If the
+ * balance update fails, the ledger entry is removed so the payment can be
+ * retried.
  * @returns {Promise<boolean>} whether this call made the payment
  */
 async function payTaskReward(task, now = new Date()) {
+  let entry;
   try {
-    await CreditTransaction.create({
+    entry = await CreditTransaction.create({
       user: task.assignee,
       amount: task.reward,
       kind: "task_reward",
@@ -32,23 +61,12 @@ async function payTaskReward(task, now = new Date()) {
     throw error;
   }
 
-  const user = await User.findByIdAndUpdate(
-    task.assignee,
-    { $inc: { credits: task.reward, xp: task.reward } },
-    { returnDocument: "after" }
-  );
-  if (!user) return true;
-
-  await User.updateOne(
-    { _id: user._id },
-    {
-      $set: {
-        level: levelForXp(user.xp),
-        streak: nextStreak(user.streak, user.lastApprovedAt, now),
-        lastApprovedAt: now,
-      },
-    }
-  );
+  try {
+    await addReward(task.assignee, task.reward, now);
+  } catch (error) {
+    await CreditTransaction.deleteOne({ _id: entry._id });
+    throw error;
+  }
   return true;
 }
 
@@ -73,4 +91,9 @@ async function recordSpend({ user, cost, kind, ref, note }) {
   return CreditTransaction.create({ user, amount: -cost, kind, ref, note });
 }
 
-module.exports = { payTaskReward, debit, refund, recordSpend };
+/** Removes a spend entry written by `recordSpend` when the rest of an operation fails. */
+async function removeSpend(kind, ref) {
+  await CreditTransaction.deleteOne({ kind, ref });
+}
+
+module.exports = { payTaskReward, debit, refund, recordSpend, removeSpend };

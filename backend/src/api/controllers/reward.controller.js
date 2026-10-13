@@ -3,7 +3,7 @@ const Reward = require("../models/reward.model");
 const Redemption = require("../models/redemption.model");
 const APIError = require("../utils/APIError");
 const asyncHandler = require("../utils/asyncHandler");
-const { debit, refund, recordSpend } = require("../services/credits");
+const { debit, refund, recordSpend, removeSpend } = require("../services/credits");
 const { sameId, teamManagerId } = require("../services/team");
 
 const pickRewardFields = (body = {}) => {
@@ -91,14 +91,22 @@ exports.redeemReward = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const redemption = await Redemption.create({
-    _id: redemptionId,
-    worker: req.user._id,
-    reward: reward._id,
-    rewardTitle: reward.title,
-    manager: reward.createdBy,
-    cost: reward.cost,
-  });
+  let redemption;
+  try {
+    redemption = await Redemption.create({
+      _id: redemptionId,
+      worker: req.user._id,
+      reward: reward._id,
+      rewardTitle: reward.title,
+      manager: reward.createdBy,
+      cost: reward.cost,
+    });
+  } catch (error) {
+    await removeSpend("reward_redeem", redemptionId);
+    await refund(req.user._id, reward.cost);
+    if (limited) await Reward.updateOne({ _id: reward._id }, { $inc: { stock: 1 } });
+    throw error;
+  }
   res.status(201).json(redemption);
 });
 

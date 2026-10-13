@@ -41,6 +41,11 @@ except `/auth/*` and `GET /users/managers`.
 - **Streak** = consecutive calendar days (UTC) with at least one approved task.
   Another approval the same day keeps it, one the next day extends it, a gap resets it
   to 1. A streak whose last approval is older than yesterday is reported as `0`.
+- **Failed writes are rolled back.** If a payout fails partway, the ledger entry is
+  removed and the task goes back to `in review`, so the manager can approve again. A
+  failed redemption or penalty clear refunds the credits and restores the stock or
+  penalty. Concurrent approvals for one worker apply their XP, level and streak
+  updates one after another, so none is lost.
 - **Balances never go negative.** Every debit is one conditional atomic update
   (`credits >= cost`). The ledger has one entry per task, redemption and penalty
   (unique `kind` + `ref`), so nothing is paid or charged twice.
@@ -113,8 +118,12 @@ The manager's reports: each is the `/me` profile (without `manager`) plus
 `activePenalties`.
 
 The older `GET /users`, `GET /users/search?name=`, `GET /users/:id`, `POST /users`,
-`PUT /users/:id` and `DELETE /users/:id` remain; `PUT`/`DELETE` only work on your own
-account (`403` otherwise).
+`PUT /users/:id` and `DELETE /users/:id` remain. The reads only see your team (your
+manager and everyone reporting to them; a worker with no manager sees only
+themselves): other users are left out of lists and searches and `GET /users/:id`
+returns `404` for them. `GET /users/search` returns up to 5 matches by name or email
+with `name` and `email` only. `PUT`/`DELETE` only work on your own account (`403`
+otherwise).
 
 ## Market and tasks
 
@@ -154,8 +163,12 @@ Your tasks in `in review`, oldest submission first, `assignee` populated.
 `GET /tasks`, `GET /tasks/search?name=`, `GET /tasks/:id`, `GET /tasks/user/:id`,
 `PATCH /tasks/:id`, `POST /tasks/status/:id`, `POST /tasks/type/:id`,
 `POST /tasks/assignee/:userId/:taskId`, `DELETE /tasks/:id` and all `/sprints`
-routes keep working (with a JWT). For market tasks: status/assignee changes there
-return `409`, and edit/delete is limited to the posting manager (`403`).
+routes keep working (with a JWT). They are scoped to your team: you see your team
+manager's market tasks plus legacy tasks (no `createdBy`) assigned to someone in your
+team. Any other task is left out of lists and searches, and reading or changing it by
+id returns `404`; `POST /tasks/assignee/...` only assigns to members of your team.
+For market tasks: status/assignee changes there return `409`, and edit/delete is
+limited to the posting manager (`403`).
 
 ## Wallet
 

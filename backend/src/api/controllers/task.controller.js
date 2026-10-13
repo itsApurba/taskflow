@@ -2,13 +2,20 @@ const Task = require("../models/task.model");
 const APIError = require("../utils/APIError");
 const asyncHandler = require("../utils/asyncHandler");
 const { payTaskReward } = require("../services/credits");
-const { sameId, teamManagerId } = require("../services/team");
+const { sameId, teamManagerId, teamMemberIds, teamTaskFilter } = require("../services/team");
 
 const PERSON_FIELDS = "name email role";
 
 /** Loads a task by `req.params.id` or throws 404. */
 async function findTask(id) {
   const task = await Task.findById(id);
+  if (!task) throw APIError.notFound("Task not found");
+  return task;
+}
+
+/** Loads a task visible to the user's team, or throws 404. */
+async function findTeamTask(id, user) {
+  const task = await Task.findOne({ $and: [{ _id: id }, await teamTaskFilter(user)] });
   if (!task) throw APIError.notFound("Task not found");
   return task;
 }
@@ -93,7 +100,16 @@ exports.approveTask = asyncHandler(async (req, res) => {
     { $set: { status: "done", approvedAt: now }, $unset: { reviewNote: 1 } },
     "Task is not awaiting review"
   );
-  await payTaskReward(approved, now);
+  try {
+    await payTaskReward(approved, now);
+  } catch (error) {
+    // Put the task back in review so the manager can approve it again.
+    await Task.updateOne(
+      { _id: approved._id, status: "done", approvedAt: now },
+      { $set: { status: "in review" }, $unset: { approvedAt: 1 } }
+    );
+    throw error;
+  }
   res.status(200).json(approved);
 });
 
@@ -127,26 +143,26 @@ exports.getReviewQueue = asyncHandler(async (req, res) => {
   res.status(200).json(tasks);
 });
 
-// ---- Generic task endpoints (board and sprints) ----
+// ---- Generic task endpoints (board and sprints), scoped to the caller's team ----
 
 exports.getTasks = asyncHandler(async (req, res) => {
-  const tasks = await Task.find();
+  const tasks = await Task.find(await teamTaskFilter(req.user));
   res.status(200).send(tasks);
 });
 
 exports.getTask = asyncHandler(async (req, res) => {
-  const task = await findTask(req.params.id);
+  const task = await findTeamTask(req.params.id, req.user);
   res.status(200).send(task);
 });
 
 exports.getTaskByUser = asyncHandler(async (req, res) => {
-  const tasks = await Task.find({ assignee: req.params.id });
+  const tasks = await Task.find({ $and: [{ assignee: req.params.id }, await teamTaskFilter(req.user)] });
   res.status(200).send(tasks);
 });
 
 exports.updateTask = asyncHandler(async (req, res) => {
   const { title, type, description, assignee, status, reward } = req.body || {};
-  const task = await findTask(req.params.id);
+  const task = await findTeamTask(req.params.id, req.user);
   let body = { title, type, description, assignee, status };
   if (task.createdBy) {
     assertTaskCreator(task, req.user);
@@ -164,7 +180,7 @@ exports.updateTask = asyncHandler(async (req, res) => {
 
 exports.updateTaskStatus = asyncHandler(async (req, res) => {
   const { status } = req.body || {};
-  const task = await findTask(req.params.id);
+  const task = await findTeamTask(req.params.id, req.user);
   if (task.createdBy) throw APIError.conflict("Use the market endpoints to change a market task's status");
   const updated = await Task.findByIdAndUpdate(task._id, { status }, { returnDocument: "after", runValidators: true });
   res.status(200).send(updated);
@@ -172,21 +188,23 @@ exports.updateTaskStatus = asyncHandler(async (req, res) => {
 
 exports.updateTaskType = asyncHandler(async (req, res) => {
   const { type } = req.body || {};
-  const task = await findTask(req.params.id);
+  const task = await findTeamTask(req.params.id, req.user);
   if (task.createdBy) assertTaskCreator(task, req.user);
   const updated = await Task.findByIdAndUpdate(task._id, { type }, { returnDocument: "after", runValidators: true });
   res.status(200).send(updated);
 });
 
 exports.assignTask = asyncHandler(async (req, res) => {
-  const task = await findTask(req.params.taskId);
+  const task = await findTeamTask(req.params.taskId, req.user);
   if (task.createdBy) throw APIError.conflict("Market tasks are assigned by claiming them");
+  const team = await teamMemberIds(req.user);
+  if (!team.some((id) => sameId(id, req.params.id))) throw APIError.notFound("User not found in your team");
   const updated = await Task.findByIdAndUpdate(task._id, { assignee: req.params.id }, { returnDocument: "after" });
   res.status(200).send(updated);
 });
 
 exports.deleteTask = asyncHandler(async (req, res) => {
-  const task = await findTask(req.params.id);
+  const task = await findTeamTask(req.params.id, req.user);
   if (task.createdBy) assertTaskCreator(task, req.user);
   await Task.deleteOne({ _id: task._id });
   res.status(200).send(task);
@@ -194,6 +212,6 @@ exports.deleteTask = asyncHandler(async (req, res) => {
 
 exports.searchTasksByName = asyncHandler(async (req, res) => {
   const { name } = req.query;
-  const tasks = await Task.find({ title: { $regex: name, $options: "i" } }).limit(5);
+  const tasks = await Task.find({ $and: [{ title: { $regex: name, $options: "i" } }, await teamTaskFilter(req.user)] }).limit(5);
   res.status(200).send(tasks);
 });

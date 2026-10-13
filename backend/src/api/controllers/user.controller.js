@@ -4,6 +4,7 @@ const Penalty = require("../models/penalty.model");
 const APIError = require("../utils/APIError");
 const asyncHandler = require("../utils/asyncHandler");
 const { signupData } = require("../services/signup");
+const { teamMemberIds } = require("../services/team");
 
 const assertSelf = (req) => {
   if (String(req.params.id) !== String(req.user._id)) throw APIError.forbidden("You can only change your own account");
@@ -14,13 +15,15 @@ exports.createUser = asyncHandler(async (req, res) => {
   res.status(201).send(newUser);
 });
 
+// User reads are scoped to the caller's team (their manager and that manager's reports).
+
 exports.getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find();
+  const users = await User.find({ _id: { $in: await teamMemberIds(req.user) } });
   res.status(200).send(users);
 });
 
 exports.getUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const user = await User.findOne({ $and: [{ _id: req.params.id }, { _id: { $in: await teamMemberIds(req.user) } }] });
   if (!user) throw APIError.notFound("User not found");
   res.status(200).send(user);
 });
@@ -44,22 +47,16 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   res.status(200).send(user);
 });
 
-exports.searchUser = async (req, res) => {
-  let x = 5;
-  try {
-    const { name } = req.query;
-    const users = await User.find(
-      {
-        $or: [{ name: { $regex: name, $options: "i" } }, { email: { $regex: name, $options: "i" } }],
-      },
-      { limit: x , name: 1, email: 1 }
-    ).select("-password")
-    res.status(200).send(users);
-  } catch (error) {
-    console.log(error);
-    res.status(400).send(error);
-  }
-};
+exports.searchUser = asyncHandler(async (req, res) => {
+  const { name } = req.query;
+  const users = await User.find({
+    _id: { $in: await teamMemberIds(req.user) },
+    $or: [{ name: { $regex: name, $options: "i" } }, { email: { $regex: name, $options: "i" } }],
+  })
+    .select("name email")
+    .limit(5);
+  res.status(200).send(users);
+});
 
 /** Managers for the signup picker (public). */
 exports.getManagers = asyncHandler(async (req, res) => {

@@ -30,22 +30,38 @@ exports.clearPenalty = asyncHandler(async (req, res) => {
   if (penalty.status !== "active") throw APIError.conflict("Penalty is already cleared");
 
   await debit(req.user._id, penalty.cost);
-  const cleared = await Penalty.findOneAndUpdate(
-    { _id: penalty._id, status: "active" },
-    { $set: { status: "cleared", clearedAt: new Date() } },
-    { returnDocument: "after" }
-  );
+  const clearedAt = new Date();
+  let cleared;
+  try {
+    cleared = await Penalty.findOneAndUpdate(
+      { _id: penalty._id, status: "active" },
+      { $set: { status: "cleared", clearedAt } },
+      { returnDocument: "after" }
+    );
+  } catch (error) {
+    await refund(req.user._id, penalty.cost);
+    throw error;
+  }
   if (!cleared) {
     await refund(req.user._id, penalty.cost);
     throw APIError.conflict("Penalty is already cleared");
   }
 
-  await recordSpend({
-    user: req.user._id,
-    cost: penalty.cost,
-    kind: "penalty_clear",
-    ref: penalty._id,
-    note: `Penalty cleared: ${penalty.reason}`,
-  });
+  try {
+    await recordSpend({
+      user: req.user._id,
+      cost: penalty.cost,
+      kind: "penalty_clear",
+      ref: penalty._id,
+      note: `Penalty cleared: ${penalty.reason}`,
+    });
+  } catch (error) {
+    await Penalty.updateOne(
+      { _id: penalty._id, status: "cleared", clearedAt },
+      { $set: { status: "active" }, $unset: { clearedAt: 1 } }
+    );
+    await refund(req.user._id, penalty.cost);
+    throw error;
+  }
   res.status(200).json(cleared);
 });

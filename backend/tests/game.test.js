@@ -3,6 +3,9 @@ const { describe, test, before, after, beforeEach } = require("node:test");
 const { expect } = require("expect");
 const CreditTransaction = require("../src/api/models/creditTransaction.model");
 const Reward = require("../src/api/models/reward.model");
+const Redemption = require("../src/api/models/redemption.model");
+const Penalty = require("../src/api/models/penalty.model");
+const Task = require("../src/api/models/task.model");
 const User = require("../src/api/models/user.model");
 const {
   startDb,
@@ -20,6 +23,18 @@ const {
 before(startDb);
 after(stopDb);
 beforeEach(clearDb);
+
+/** Makes `model[method]` reject once with a simulated database error, then restores it. */
+function failOnce(model, method) {
+  const original = model[method];
+  model[method] = function failing() {
+    model[method] = original;
+    return Promise.reject(new Error("simulated database failure"));
+  };
+  return () => {
+    model[method] = original;
+  };
+}
 
 describe("auth and profile", () => {
   test("signup picker lists managers with id and name only, without a token", async () => {
@@ -449,5 +464,133 @@ describe("team and leaderboard", () => {
     ]);
 
     await api().get("/api/leaderboard?period=year").set(manager.auth).expect(400);
+  });
+});
+
+describe("team scoping of board endpoints", () => {
+  test("users, tasks and searches only show the caller's team", async () => {
+    const { manager, workers } = await team(1);
+    const other = await team(1);
+    const ours = await postTask(manager, { title: "Our task" });
+    const theirs = await postTask(other.manager, { title: "Their task" });
+    // A legacy task (no createdBy) assigned in the other team.
+    const legacy = await Task.create({ title: "Their legacy task", assignee: other.workers[0].user._id });
+
+    for (const viewer of [manager, workers[0]]) {
+      const users = await api().get("/api/users").set(viewer.auth).expect(200);
+      expect(users.body.map((u) => u._id).sort()).toEqual([manager.user._id, workers[0].user._id].sort());
+      users.body.forEach((u) => expect(u.password).toBeUndefined());
+      await api().get(`/api/users/${other.workers[0].user._id}`).set(viewer.auth).expect(404);
+      await api().get(`/api/users/${workers[0].user._id}`).set(viewer.auth).expect(200);
+      const found = await api().get(`/api/users/search?name=${encodeURIComponent(other.workers[0].user.name)}`).set(viewer.auth).expect(200);
+      expect(found.body).toEqual([]);
+
+      const tasks = await api().get("/api/tasks").set(viewer.auth).expect(200);
+      expect(tasks.body.map((t) => t._id)).toEqual([ours._id]);
+      await api().get(`/api/tasks/${theirs._id}`).set(viewer.auth).expect(404);
+      await api().get(`/api/tasks/${legacy._id}`).set(viewer.auth).expect(404);
+      await api().get(`/api/tasks/${ours._id}`).set(viewer.auth).expect(200);
+      const byUser = await api().get(`/api/tasks/user/${other.workers[0].user._id}`).set(viewer.auth).expect(200);
+      expect(byUser.body).toEqual([]);
+      const search = await api().get("/api/tasks/search?name=task").set(viewer.auth).expect(200);
+      expect(search.body.map((t) => t._id)).toEqual([ours._id]);
+    }
+
+    const theirView = await api().get("/api/tasks").set(other.workers[0].auth).expect(200);
+    expect(theirView.body.map((t) => t._id).sort()).toEqual([theirs._id, String(legacy._id)].sort());
+  });
+
+  test("board edits cannot reach another team's tasks", async () => {
+    const { manager } = await team(1);
+    const other = await team(1);
+    const legacy = await Task.create({ title: "Their legacy task", assignee: other.workers[0].user._id });
+    await api().patch(`/api/tasks/${legacy._id}`).set(manager.auth).send({ title: "hijacked" }).expect(404);
+    await api().post(`/api/tasks/status/${legacy._id}`).set(manager.auth).send({ status: "closed" }).expect(404);
+    await api().delete(`/api/tasks/${legacy._id}`).set(manager.auth).expect(404);
+    expect((await Task.findById(legacy._id)).title).toBe("Their legacy task");
+  });
+});
+
+describe("failure recovery", () => {
+  test("a failed payout leaves the task in review with nothing paid, and approval can be retried", async () => {
+    const { manager, workers } = await team(1);
+    const [worker] = workers;
+    const task = await postTask(manager, { reward: 70 });
+    await api().post(`/api/tasks/${task._id}/claim`).set(worker.auth).expect(200);
+    await api().post(`/api/tasks/${task._id}/submit`).set(worker.auth).expect(200);
+
+    const restore = failOnce(User, "updateOne");
+    try {
+      await api().post(`/api/tasks/${task._id}/approve`).set(manager.auth).expect(500);
+    } finally {
+      restore();
+    }
+    expect((await Task.findById(task._id)).status).toBe("in review");
+    expect(await CreditTransaction.countDocuments()).toBe(0);
+    expect(await credits(worker)).toBe(0);
+
+    await api().post(`/api/tasks/${task._id}/approve`).set(manager.auth).expect(200);
+    expect(await credits(worker)).toBe(70);
+    expect(await CreditTransaction.countDocuments()).toBe(1);
+  });
+
+  test("concurrent approvals for one worker add up XP, level and credits exactly", async () => {
+    const { manager, workers } = await team(1);
+    const [worker] = workers;
+    const tasks = [];
+    for (let i = 0; i < 4; i += 1) {
+      const task = await postTask(manager, { reward: 50 });
+      await api().post(`/api/tasks/${task._id}/claim`).set(worker.auth).expect(200);
+      await api().post(`/api/tasks/${task._id}/submit`).set(worker.auth).expect(200);
+      tasks.push(task);
+    }
+    const results = await Promise.all(tasks.map((t) => api().post(`/api/tasks/${t._id}/approve`).set(manager.auth)));
+    expect(results.map((r) => r.status)).toEqual([200, 200, 200, 200]);
+    const me = await api().get("/api/me").set(worker.auth).expect(200);
+    expect(me.body).toMatchObject({ credits: 200, xp: 200, level: 2, streak: 1 });
+  });
+
+  test("a failed penalty ledger write refunds the credits and keeps the penalty active", async () => {
+    const { manager, workers } = await team(1);
+    const [worker] = workers;
+    await setCredits(worker, 100);
+    const issued = await api()
+      .post("/api/penalties")
+      .set(manager.auth)
+      .send({ worker: worker.user._id, reason: "Late", cost: 30 })
+      .expect(201);
+
+    const restore = failOnce(CreditTransaction, "create");
+    try {
+      await api().post(`/api/penalties/${issued.body._id}/clear`).set(worker.auth).expect(500);
+    } finally {
+      restore();
+    }
+    expect(await credits(worker)).toBe(100);
+    expect((await Penalty.findById(issued.body._id)).status).toBe("active");
+
+    await api().post(`/api/penalties/${issued.body._id}/clear`).set(worker.auth).expect(200);
+    expect(await credits(worker)).toBe(70);
+  });
+
+  test("a failed redemption write refunds credits, restores stock and drops the ledger entry", async () => {
+    const { manager, workers } = await team(1);
+    const [worker] = workers;
+    const reward = await api()
+      .post("/api/rewards")
+      .set(manager.auth)
+      .send({ title: "Event ticket", cost: 40, stock: 1 })
+      .expect(201);
+    await setCredits(worker, 100);
+
+    const restore = failOnce(Redemption, "create");
+    try {
+      await api().post(`/api/rewards/${reward.body._id}/redeem`).set(worker.auth).expect(500);
+    } finally {
+      restore();
+    }
+    expect(await credits(worker)).toBe(100);
+    expect((await Reward.findById(reward.body._id)).stock).toBe(1);
+    expect(await CreditTransaction.countDocuments()).toBe(0);
   });
 });
