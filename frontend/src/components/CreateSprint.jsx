@@ -1,4 +1,6 @@
-import { Box, Button, FormControl, FormErrorMessage, FormLabel, Input, InputGroup, VStack, useColorModeValue, useToast } from "@chakra-ui/react";
+import { Box, Button, Field as ChakraField, Input, VStack } from "@chakra-ui/react";
+import { useColorModeValue } from "../hooks/useColorMode";
+import { toaster } from "./ui/toaster";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import api from "../api/api";
@@ -17,7 +19,6 @@ const SprintSchema = Yup.object().shape({
 const CreateSprint = () => {
   const { id } = useParams();
   const { state } = useLocation();
-  const toast = useToast();
   const initValue = {
     name: state?.sprint.name || "",
     startDate: (state && moment(state.sprint.startDate).format("yyyy-mm-DD")) || new Date(),
@@ -28,12 +29,12 @@ const CreateSprint = () => {
   const navigate = useNavigate();
 
   return (
-    <Box p={4} maxW={"container.lg"} m={"auto"}>
+    <Box p={4} maxW={"5xl"} m={"auto"}>
       <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
         <Formik
           initialValues={initValue}
           validationSchema={SprintSchema}
-          onSubmit={async (values, { resetForm }) => {
+          onSubmit={async (values) => {
             console.log(values.startDate);
             const startDate = moment(values.startDate).format();
             const endDate = moment(values.endDate).format();
@@ -47,34 +48,34 @@ const CreateSprint = () => {
             if (id) {
               try {
                 const res = await api.patch(`/sprints/${id}`, updatedValues);
-                toast({
+                toaster.create({
                   title: "Update Success",
                   description: res.data.message,
-                  status: "success",
+                  type: "success",
                 });
                 navigate(-1);
               } catch (error) {
                 console.log(error);
-                toast({
+                toaster.create({
                   title: "Error",
                   description: error.message,
-                  status: "error",
+                  type: "error",
                 });
               }
             } else {
               try {
                 const res = await api.post("/sprints", updatedValues);
-                toast({
+                toaster.create({
                   title: "Success",
                   description: res.data.message,
-                  status: "success",
+                  type: "success",
                 });
               } catch (error) {
                 console.log(error);
-                toast({
+                toaster.create({
                   title: "Error",
                   description: error.message,
-                  status: "error",
+                  type: "error",
                 });
               }
             }
@@ -85,32 +86,32 @@ const CreateSprint = () => {
         >
           {({ isSubmitting, errors, touched }) => (
             <Form>
-              <VStack spacing={4}>
-                <FormControl isInvalid={errors.name && touched.name}>
-                  <FormLabel>Name</FormLabel>
+              <VStack gap={4}>
+                <ChakraField.Root invalid={errors.name && touched.name}>
+                  <ChakraField.Label>Name</ChakraField.Label>
                   <Field as={Input} type='text' name='name' />
-                  <FormErrorMessage component='div'>
+                  <ChakraField.ErrorText>
                     <ErrorMessage name='name' />
-                  </FormErrorMessage>
-                </FormControl>
+                  </ChakraField.ErrorText>
+                </ChakraField.Root>
 
                 <AssignSprintField name='tasks' />
 
-                <FormControl isInvalid={errors.startDate && touched.startDate}>
-                  <FormLabel>Start Date</FormLabel>
+                <ChakraField.Root invalid={errors.startDate && touched.startDate}>
+                  <ChakraField.Label>Start Date</ChakraField.Label>
                   <Field as={Input} type='date' name='startDate' />
-                  <FormErrorMessage component='div'>
+                  <ChakraField.ErrorText>
                     <ErrorMessage name='startDate' />
-                  </FormErrorMessage>
-                </FormControl>
+                  </ChakraField.ErrorText>
+                </ChakraField.Root>
 
-                <FormControl isInvalid={errors.endDate && touched.endDate}>
-                  <FormLabel>End Date</FormLabel>
+                <ChakraField.Root invalid={errors.endDate && touched.endDate}>
+                  <ChakraField.Label>End Date</ChakraField.Label>
                   <Field as={Input} type='date' name='endDate' />
-                  <FormErrorMessage component='div'>
+                  <ChakraField.ErrorText>
                     <ErrorMessage name='endDate' />
-                  </FormErrorMessage>
-                </FormControl>
+                  </ChakraField.ErrorText>
+                </ChakraField.Root>
 
                 {/* <FormControl isInvalid={errors.tasks && touched.tasks}>
                   <FormLabel>Tasks</FormLabel>

@@ -1,6 +1,8 @@
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Button, FormControl, FormLabel, Input, FormErrorMessage, VStack, Box, useColorModeValue, useToast } from "@chakra-ui/react";
+import { Button, Field as ChakraField, Input, VStack, Box } from "@chakra-ui/react";
+import { useColorModeValue } from "../hooks/useColorMode";
+import { toaster } from "../components/ui/toaster";
 import api from "../api/api";
 import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -12,10 +14,9 @@ const SignUpSchema = Yup.object().shape({
 });
 const SignupForm = () => {
   const navigate = useNavigate()
-  const toast = useToast()
   const { setUserEmail, setIsLoggedIn, setUserName, setUserId } = useAuth();
   return (
-    <Box p={4} maxW={"container.lg"} m={"auto"}>
+    <Box p={4} maxW={"5xl"} m={"auto"}>
       <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
 
     <Formik
@@ -27,10 +28,10 @@ const SignupForm = () => {
           console.log(res.data);
           const { token, user } = res.data;
           localStorage.setItem("access_token", JSON.stringify(token));
-           toast({
+           toaster.create({
              title: "Success",
              description: "Login Successful",
-             status: "success",
+             type: "success",
            });
            setIsLoggedIn(true);
            setUserName(user.name);
@@ -38,40 +39,40 @@ const SignupForm = () => {
            setUserId(user._id);
            navigate("/dashboard");
         } catch (error) {
-          toast({
+          toaster.create({
             title: "Email Already Exists",
             description: error.response.data.message,
-            status: "error",
+            type: "error",
           });
         }
       }}
     >
       {({ isSubmitting, errors, touched }) => (
         <Form>
-          <VStack spacing={4}>
-            <FormControl isInvalid={errors.name && touched.name}>
-              <FormLabel>Name</FormLabel>
+          <VStack gap={4}>
+            <ChakraField.Root invalid={errors.name && touched.name}>
+              <ChakraField.Label>Name</ChakraField.Label>
               <Field as={Input} type='text' name='name' />
-              <FormErrorMessage component='div'>
+              <ChakraField.ErrorText>
                 <ErrorMessage name='name' />
-              </FormErrorMessage>
-            </FormControl>
+              </ChakraField.ErrorText>
+            </ChakraField.Root>
 
-            <FormControl isInvalid={errors.email && touched.email}>
-              <FormLabel>Email</FormLabel>
+            <ChakraField.Root invalid={errors.email && touched.email}>
+              <ChakraField.Label>Email</ChakraField.Label>
               <Field as={Input} type='email' name='email' />
-              <FormErrorMessage component='div'>
+              <ChakraField.ErrorText>
                 <ErrorMessage name='email' />
-              </FormErrorMessage>
-            </FormControl>
+              </ChakraField.ErrorText>
+            </ChakraField.Root>
 
-            <FormControl isInvalid={errors.password && touched.password}>
-              <FormLabel>Password</FormLabel>
+            <ChakraField.Root invalid={errors.password && touched.password}>
+              <ChakraField.Label>Password</ChakraField.Label>
               <Field as={Input} type='password' name='password' />
-              <FormErrorMessage component='div'>
+              <ChakraField.ErrorText>
                 <ErrorMessage name='password' />
-              </FormErrorMessage>
-            </FormControl>
+              </ChakraField.ErrorText>
+            </ChakraField.Root>
 
             <Button type='submit' disabled={isSubmitting}>
               Sign Up

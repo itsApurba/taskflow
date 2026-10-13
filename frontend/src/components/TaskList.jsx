@@ -1,5 +1,5 @@
-import { Box, Divider, Flex, Spinner, useColorModeValue } from "@chakra-ui/react";
-import React from "react";
+import { Box, Flex, Separator, Spinner } from "@chakra-ui/react";
+import { useColorModeValue } from "../hooks/useColorMode";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/api";
 import TaskCard from "./TaskCard";
@@ -14,7 +14,7 @@ const TaskList = () => {
   });
   return (
     <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={8}>
-      <Divider />
+      <Separator />
       {isLoading ? (
         <Flex w={'full'}>
           <Spinner />

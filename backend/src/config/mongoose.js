@@ -13,11 +13,7 @@ if (env === "development") {
 exports.connect = async () => {
   console.log(mongo.uri);
   await mongoose
-    .connect(mongo.uri, {
-      keepAlive: true,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
+    .connect(mongo.uri)
     .then(() => {
       console.log("Database connected");
     });

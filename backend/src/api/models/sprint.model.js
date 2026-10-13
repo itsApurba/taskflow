@@ -24,9 +24,8 @@ const SprintSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now },
 });
 
-SprintSchema.pre("save", function (next) {
+SprintSchema.pre("save", function () {
   this.updated_at = Date.now();
-  next();
 });
 
 const Sprint = mongoose.model("Sprint", SprintSchema);

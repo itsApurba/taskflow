@@ -1,15 +1,19 @@
-// theme.js
+import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
-// 1. import `extendTheme` function
-import { extendTheme } from "@chakra-ui/react";
+// Chakra v2's default button was a soft gray; v3's "surface" variant is the
+// closest match that stays visible on the gray.100/gray.900 panels.
+const config = defineConfig({
+  theme: {
+    recipes: {
+      button: {
+        defaultVariants: {
+          variant: "surface",
+        },
+      },
+    },
+  },
+});
 
-// 2. Add your color mode config
-const config = {
-  initialColorMode: "dark",
-  useSystemColorMode: true,
-};
+const system = createSystem(defaultConfig, config);
 
-// 3. extend the theme
-const theme = extendTheme({ config });
-
-export default theme;
+export default system;

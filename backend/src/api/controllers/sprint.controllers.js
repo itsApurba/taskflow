@@ -36,7 +36,7 @@ exports.getSprintById = async (req, res) => {
 exports.updateSprint = async (req, res) => {
   try {
     const sprint = await Sprint.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+      returnDocument: "after",
     });
     if(!sprint) {
       return res.status(404).json({ message: "Sprint not found" });

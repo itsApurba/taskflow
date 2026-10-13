@@ -1,5 +1,6 @@
-import { DeleteIcon } from "@chakra-ui/icons";
-import { Box, HStack, Heading, IconButton, Text, VStack, useToast } from "@chakra-ui/react";
+import { LuTrash2 } from "react-icons/lu";
+import { HStack, Heading, IconButton, Text, VStack } from "@chakra-ui/react";
+import { toaster } from "./ui/toaster";
 import moment from "moment";
 import api from "../api/api";
 import { useState } from "react";
@@ -7,25 +8,24 @@ import { useNavigate } from "react-router-dom";
 
 const SprintCard = ({ sprint, refetch }) => {
   const [loading, setLoading] = useState(false);
-  const toast = useToast();
   const navigate = useNavigate();
   const handleDelete = async () => {
     setLoading(true);
     try {
       await api.delete(`/sprints/${sprint._id}`);
-      toast({
+      toaster.create({
         title: "Sprint deleted",
-        status: "success",
-        isClosable: true,
+        type: "success",
+        closable: true,
       });
       refetch();
       setLoading(false);
     } catch (error) {
-      toast({
+      toaster.create({
         title: "Error",
         description: error.message,
-        status: "error",
-        isClosable: true,
+        type: "error",
+        closable: true,
       });
       setLoading(false);
     }
@@ -53,7 +53,7 @@ const SprintCard = ({ sprint, refetch }) => {
           }
         >
           <VStack align={"flex-start"}>
-            <Heading size={"lg"} fontWeight={"normal"}>
+            <Heading size={"3xl"} fontWeight={"normal"}>
               {sprint.name}
             </Heading>
             <VStack align={"flex-start"} lineHeight={"0.8"}>
@@ -70,7 +70,9 @@ const SprintCard = ({ sprint, refetch }) => {
             )}
           </VStack>
         </div>
-        <IconButton zIndex={1000} shadow={"lg"} aria-label='delete' isLoading={loading} onClick={handleDelete} icon={<DeleteIcon color={"red.500"} />} />
+        <IconButton zIndex={1000} shadow={"lg"} aria-label='delete' loading={loading} onClick={handleDelete} color={"red.500"}>
+          <LuTrash2 />
+        </IconButton>
       </HStack>
     </VStack>
   );

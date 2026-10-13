@@ -48,7 +48,7 @@ exports.updateTask = async (req, res) => {
   const body = { title, type, description, assignee, status };
   try {
     const task = await Task.findByIdAndUpdate(req.params.id, body, {
-      new: true,
+      returnDocument: "after",
     });
     if (!task) {
       return res.status(404).send({ message: "Task not found" });
@@ -64,7 +64,7 @@ exports.updateTaskStatus = async (req, res) => {
   const body = { status };
   try {
     const task = await Task.findByIdAndUpdate(req.params.id, body, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
     if (!task) {
@@ -80,7 +80,7 @@ exports.updateTaskType = async (req, res) => {
   const body = { type };
   try {
     const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+      returnDocument: "after",
       // runValidators: true,
     });
     if (!task) {
@@ -100,7 +100,7 @@ exports.assignTask = async (req, res) => {
       taskId,
       { assignee: userId },
       {
-        new: true,
+        returnDocument: "after",
       }
     );
     if (!task) {
