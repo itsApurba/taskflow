@@ -1,6 +1,6 @@
 import { Button, Skeleton, Stack } from "@chakra-ui/react";
 import moment from "moment";
-import { LuPlus } from "react-icons/lu";
+import { LuPlus, LuStore } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import ManagerHome from "../components/home/ManagerHome";
 import WorkerHome from "../components/home/WorkerHome";
@@ -30,12 +30,20 @@ const Dashboard = () => {
       eyebrow={moment().format("dddd, D MMMM")}
       title={`${greeting()}, ${firstName(userName)}`}
       description={description}
-      // Phones create tasks from the Board tab; here the next-up card leads.
+      // Phones reach the market from the tab bar; here the next-up card leads.
       actionsProps={{ display: { base: "none", sm: "flex" } }}
       actions={
         <Button asChild>
-          <Link to={isManager ? "/market" : "/create-task"}>
-            <LuPlus /> {isManager ? "Post a task" : "New task"}
+          <Link to='/market'>
+            {isManager ? (
+              <>
+                <LuPlus /> Post a task
+              </>
+            ) : (
+              <>
+                <LuStore /> Find a task
+              </>
+            )}
           </Link>
         </Button>
       }
