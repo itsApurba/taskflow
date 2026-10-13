@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 import CreateTask from "../components/CreateTask";
 import PrivateRoute from "./PrivateRoute";
 import LoginForm from "../pages/LoginForm";
@@ -9,6 +9,9 @@ import Dashboard from "../pages/Dashboard";
 import TasksPage from "../pages/TasksPage";
 import SprintsPage from "../pages/SprintsPage";
 import ComingSoonPage from "../pages/ComingSoonPage";
+import MarketPage from "../pages/MarketPage";
+import MarketTaskPage from "../pages/MarketTaskPage";
+import PostTaskPage from "../pages/PostTaskPage";
 import AppShell from "../components/shell/AppShell";
 import AuthLayout from "../components/shell/AuthLayout";
 
@@ -26,13 +29,17 @@ const AllRoutes = () => {
         <Route path='/' element={<Dashboard />} />
         <Route path='/dashboard' element={<Dashboard />} />
         <Route path='/tasks' element={<TasksPage />} />
-        <Route path='/create-task' element={<CreateTask />} />
+        {/* New tasks are posted to the market with a reward. */}
+        <Route path='/create-task' element={<Navigate to='/market/new' replace />} />
         <Route path='/task/:id' element={<CreateTask />} />
         <Route path='/sprints' element={<SprintsPage />} />
         <Route path='/create-sprint' element={<CreateSprint />} />
         <Route path='/sprint/:id' element={<CreateSprint />} />
         {/* Placeholders until the game screens are built; replace each with its page. */}
-        <Route path='/market' element={<ComingSoonPage key='market' feature='market' />} />
+        <Route path='/market' element={<MarketPage />} />
+        <Route path='/market/new' element={<PostTaskPage key='new' />} />
+        <Route path='/market/:id' element={<MarketTaskPage />} />
+        <Route path='/market/:id/edit' element={<PostTaskPage key='edit' />} />
         <Route path='/wallet' element={<ComingSoonPage key='wallet' feature='wallet' />} />
         <Route path='/store' element={<ComingSoonPage key='store' feature='store' />} />
         <Route path='/leaderboard' element={<ComingSoonPage key='leaderboard' feature='leaderboard' />} />
