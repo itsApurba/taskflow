@@ -8,6 +8,7 @@ import EmptyState from "../components/ui/EmptyState";
 import FilterChips from "../components/ui/FilterChips";
 import PageHeader from "../components/ui/PageHeader";
 import useAuth from "../hooks/useAuth";
+import useMe from "../hooks/useMe";
 import useTasks from "../hooks/useTasks";
 import { TASK_LANES, assigneeId, getTaskStatus } from "../lib/game";
 
@@ -21,6 +22,8 @@ const SCOPES = [
 // dashboard tiles can link straight to a filtered view.
 const TasksPage = () => {
   const { userId } = useAuth();
+  const { profile } = useMe();
+  const canPost = profile?.role !== "worker";
   const { data: tasks, isLoading, refetch } = useTasks();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
@@ -59,11 +62,13 @@ const TasksPage = () => {
         title='Tasks'
         description='Everything your team is working on.'
         actions={
-          <Button asChild>
-            <Link to='/create-task'>
-              <LuPlus /> New task
-            </Link>
-          </Button>
+          canPost && (
+            <Button asChild>
+              <Link to='/create-task'>
+                <LuPlus /> New task
+              </Link>
+            </Button>
+          )
         }
       />
       <BoardTabs mb={5} />
@@ -102,12 +107,14 @@ const TasksPage = () => {
               </Button>
             </EmptyState>
           ) : (
-            <EmptyState icon={LuSquareKanban} title='Your board is empty' description='Create the first task and get the team moving.' layerStyle='panel'>
-              <Button asChild>
-                <Link to='/create-task'>
-                  <LuPlus /> New task
-                </Link>
-              </Button>
+            <EmptyState icon={LuSquareKanban} title='Your board is empty' description={canPost ? "Create the first task and get the team moving." : "Your manager hasn't posted any tasks yet."} layerStyle='panel'>
+              {canPost && (
+                <Button asChild>
+                  <Link to='/create-task'>
+                    <LuPlus /> New task
+                  </Link>
+                </Button>
+              )}
             </EmptyState>
           )
         }

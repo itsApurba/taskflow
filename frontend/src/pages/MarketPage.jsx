@@ -68,8 +68,7 @@ const useTab = (fallback) => {
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (value === fallback) next.delete("tab");
-        else next.set("tab", value);
+        next.set("tab", value);
         return next;
       },
       { replace: true },

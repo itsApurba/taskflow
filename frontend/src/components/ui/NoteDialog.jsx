@@ -34,7 +34,10 @@ const NoteDialog = ({
   };
 
   return (
-    <Dialog.Root size='sm' placement={{ base: "bottom", sm: "center" }} open={open} onOpenChange={(e) => !e.open && close()} onExitComplete={() => setNote("")}>
+    <Dialog.Root size='sm' placement={{ base: "bottom", sm: "center" }} open={open} onOpenChange={(e) => !e.open && close()} onExitComplete={() => {
+        setNote("");
+        setTouched(false);
+      }}>
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>

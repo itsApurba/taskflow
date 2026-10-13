@@ -71,7 +71,8 @@ open --claim--> in progress --submit--> in review --approve--> done (credits + X
 
 Market tasks are the ones with a `createdBy`. Their status and assignee change only
 through the lifecycle endpoints; only the posting manager may edit or delete them, and
-`reward` can only change while the task is `open`. Older tasks without `createdBy` keep
+they can only be deleted, and their `reward` changed, while the task is `open`
+(otherwise `409`), so a worker's claimed or in-review work never vanishes. Older tasks without `createdBy` keep
 the legacy statuses (`not started`, `in progress`, `completed`, `closed`) and the
 legacy board/sprint endpoints; they never appear in the market.
 
@@ -169,7 +170,8 @@ team. Any other task is left out of lists and searches, and reading or changing 
 id returns `404`. `POST /tasks/assignee/...` and an `assignee` sent to `PATCH /tasks/:id`
 must be a member of your team, otherwise `404`.
 For market tasks: status/assignee changes there return `409`, and edit/delete is
-limited to the posting manager (`403`).
+limited to the posting manager (`403`), and delete or a `reward` change returns `409`
+once the task has left `open`.
 
 ## Wallet
 
