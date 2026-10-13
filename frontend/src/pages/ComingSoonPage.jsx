@@ -1,72 +1,12 @@
 import { Badge, Box, Button, Flex, Grid, HStack, Icon, Stack, Text } from "@chakra-ui/react";
-import {
-  LuArrowLeft,
-  LuBadgeCheck,
-  LuFlame,
-  LuGift,
-  LuHistory,
-  LuMedal,
-  LuShieldAlert,
-  LuTicket,
-  LuTrophy,
-  LuUser,
-  LuWallet,
-  LuZap,
-} from "react-icons/lu";
+import { LuArrowLeft, LuFlame, LuMedal, LuTrophy, LuUser, LuZap } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import PlayerCard from "../components/PlayerCard";
-import CoinIcon from "../components/ui/CoinIcon";
 import PageHeader from "../components/ui/PageHeader";
-import { SAMPLE_REWARDS } from "../lib/game";
-
-const RewardExamples = () => (
-  <Stack gap={2}>
-    {SAMPLE_REWARDS.map((reward) => (
-      <Flex key={reward.title} justify='space-between' align='center' gap={3} bg='bg.subtle' rounded='l2' px={3} py={2.5}>
-        <HStack gap={2.5} minW={0}>
-          <Icon as={reward.icon} color='coin.fg' flexShrink={0} />
-          <Text fontSize='sm' fontWeight='medium' lineClamp={1}>
-            {reward.title}
-          </Text>
-        </HStack>
-        <HStack gap={1} color='coin.fg' fontWeight='bold' fontSize='sm' flexShrink={0} fontVariantNumeric='tabular-nums'>
-          <CoinIcon boxSize={4} /> {reward.cost.toLocaleString()}
-        </HStack>
-      </Flex>
-    ))}
-    <Text fontSize='xs' color='fg.muted' mt={1}>
-      Your manager stocks the real rewards and sets their prices.
-    </Text>
-  </Stack>
-);
 
 // Copy for every screen that is not built yet. Later work replaces the route
 // in AllRoutes.jsx with the real page and removes `soon` in shell/nav.js.
 const FEATURES = {
-  wallet: {
-    icon: LuWallet,
-    palette: "coin",
-    title: "Wallet",
-    description: "Your credit balance, everything you've earned and spent, and penalties to clear.",
-    perks: [
-      { icon: LuHistory, text: "A history of every payout and purchase" },
-      { icon: LuShieldAlert, text: "Spend credits to clear penalties for mistakes" },
-      { icon: LuBadgeCheck, text: "Balances never go below zero" },
-    ],
-  },
-  store: {
-    icon: LuGift,
-    palette: "coin",
-    title: "Rewards store",
-    description: "Spend your credits on rewards your manager stocks for the team.",
-    perks: [
-      { icon: LuGift, text: "Rewards picked by your manager" },
-      { icon: LuTicket, text: "Redeem with one tap; your manager fulfils it" },
-      { icon: LuWallet, text: "Pay with the credits you earned" },
-    ],
-    previewTitle: "Examples",
-    preview: <RewardExamples />,
-  },
   leaderboard: {
     icon: LuTrophy,
     palette: "orange",
