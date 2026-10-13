@@ -2,6 +2,7 @@ import { Badge, Box, Button, Flex, Icon, IconButton, Stack, Text } from "@chakra
 import { LuPlus } from "react-icons/lu";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import Logo from "./Logo";
+import useMe from "../../hooks/useMe";
 import { SIDEBAR_GROUPS, isNavActive } from "./nav";
 
 // Tablet: an icon rail with small labels. Desktop: a full sidebar with groups.
@@ -52,6 +53,9 @@ const SidebarItem = ({ item, active }) => (
 
 const Sidebar = () => {
   const { pathname } = useLocation();
+  const { profile } = useMe();
+  // Managers post tasks to the market; workers claim them there instead.
+  const canPost = profile?.role !== "worker";
   return (
     <Flex
       as='nav'
@@ -88,16 +92,20 @@ const Sidebar = () => {
         </Stack>
       ))}
       <Box flex='1' />
-      <Button asChild size='lg' rounded='l2' display={{ md: "none", lg: "inline-flex" }}>
-        <Link to='/create-task'>
-          <LuPlus /> New task
-        </Link>
-      </Button>
-      <IconButton asChild aria-label='New task' size='lg' rounded='l2' alignSelf='center' display={{ md: "inline-flex", lg: "none" }}>
-        <Link to='/create-task'>
-          <LuPlus />
-        </Link>
-      </IconButton>
+      {canPost && (
+        <>
+          <Button asChild size='lg' rounded='l2' display={{ md: "none", lg: "inline-flex" }}>
+            <Link to='/market/new'>
+              <LuPlus /> New task
+            </Link>
+          </Button>
+          <IconButton asChild aria-label='New task' size='lg' rounded='l2' alignSelf='center' display={{ md: "inline-flex", lg: "none" }}>
+            <Link to='/market/new'>
+              <LuPlus />
+            </Link>
+          </IconButton>
+        </>
+      )}
     </Flex>
   );
 };

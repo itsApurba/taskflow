@@ -2,14 +2,11 @@ import { Badge, Box, Button, Flex, Grid, HStack, Icon, Stack, Text } from "@chak
 import {
   LuArrowLeft,
   LuBadgeCheck,
-  LuCircleCheckBig,
   LuFlame,
   LuGift,
-  LuHand,
   LuHistory,
   LuMedal,
   LuShieldAlert,
-  LuStore,
   LuTicket,
   LuTrophy,
   LuUser,
@@ -20,21 +17,7 @@ import { Link } from "react-router-dom";
 import PlayerCard from "../components/PlayerCard";
 import CoinIcon from "../components/ui/CoinIcon";
 import PageHeader from "../components/ui/PageHeader";
-import RewardTierBadge from "../components/ui/RewardTierBadge";
-import { REWARD_TIERS, SAMPLE_REWARDS } from "../lib/game";
-
-const TierLegend = () => (
-  <Stack gap={2}>
-    {[...REWARD_TIERS].reverse().map((tier, i, tiers) => (
-      <Flex key={tier.id} justify='space-between' align='center' gap={3} bg='bg.subtle' rounded='l2' px={3} py={2.5}>
-        <RewardTierBadge reward={tier.min} showAmount={false} />
-        <Text fontSize='sm' color='fg.muted' fontVariantNumeric='tabular-nums'>
-          {tiers[i + 1] ? `${tier.min}–${tiers[i + 1].min - 1}` : `${tier.min}+`} credits
-        </Text>
-      </Flex>
-    ))}
-  </Stack>
-);
+import { SAMPLE_REWARDS } from "../lib/game";
 
 const RewardExamples = () => (
   <Stack gap={2}>
@@ -60,19 +43,6 @@ const RewardExamples = () => (
 // Copy for every screen that is not built yet. Later work replaces the route
 // in AllRoutes.jsx with the real page and removes `soon` in shell/nav.js.
 const FEATURES = {
-  market: {
-    icon: LuStore,
-    palette: "brand",
-    title: "Task market",
-    description: "Browse the tasks your manager posts, see what each one pays and claim the ones you want.",
-    perks: [
-      { icon: LuHand, text: "Claim a task before anyone else does" },
-      { icon: LuZap, text: "See its credit reward and loot tier up front" },
-      { icon: LuCircleCheckBig, text: "Get paid when your manager approves the work" },
-    ],
-    previewTitle: "Reward tiers",
-    preview: <TierLegend />,
-  },
   wallet: {
     icon: LuWallet,
     palette: "coin",

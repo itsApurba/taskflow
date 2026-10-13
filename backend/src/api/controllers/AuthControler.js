@@ -2,11 +2,11 @@ const RefreshToken = require("../models/refreshToken.model");
 const moment = require("moment-timezone");
 const { jwtExpirationInterval } = require("../../config/vars");
 const User = require("../models/user.model");
-const { status: httpStatus } = require("http-status");
+const { signupData } = require("../services/signup");
 
-function generateTokenResponse(user, accessToken) {
+async function generateTokenResponse(user, accessToken) {
   const tokenType = "Bearer";
-  const refreshToken = RefreshToken.generate(user).token;
+  const { token: refreshToken } = await RefreshToken.generate(user);
   const expiresIn = moment().add(jwtExpirationInterval, "minutes");
   return {
     tokenType,
@@ -17,23 +17,21 @@ function generateTokenResponse(user, accessToken) {
 }
 
 exports.register = async (req, res, next) => {
-  console.log(req.headers)
   try {
-    const userData = req.body;
+    const userData = await signupData(req.body);
     const user = await new User(userData).save();
-    const token = generateTokenResponse(user, user.token());
-    res.status(httpStatus.CREATED);
+    const token = await generateTokenResponse(user, user.token());
+    res.status(201);
     return res.json({ token, user });
   } catch (error) {
-    return next(new Error(error));
+    return next(error);
   }
 };
 
 exports.login = async (req, res, next) => {
-  console.log(req.body)
   try {
-    const { user, accessToken } = await User.findAndGenerateToken(req.body);
-    const token = generateTokenResponse(user, accessToken);
+    const { user, accessToken } = await User.findAndGenerateToken(req.body || {});
+    const token = await generateTokenResponse(user, accessToken);
     return res.json({ token, user });
   } catch (error) {
     return next(error);
@@ -42,13 +40,13 @@ exports.login = async (req, res, next) => {
 
 exports.refresh = async (req, res, next) => {
   try {
-    const { email, refreshToken } = req.body;
+    const { email, refreshToken } = req.body || {};
     const refreshObject = await RefreshToken.findOneAndDelete({
       userEmail: email,
       token: refreshToken,
     });
     const { user, accessToken } = await User.findAndGenerateToken({ email, refreshObject });
-    const response = generateTokenResponse(user, accessToken);
+    const response = await generateTokenResponse(user, accessToken);
     return res.json(response);
   } catch (error) {
     return next(error);
