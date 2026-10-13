@@ -35,7 +35,6 @@ const AssignSprintField = () => {
   };
   const handleClick = (taskId) => {
     setFieldValue("tasks", [...values.tasks, taskId]);
-    setIsModalOpen(false);
   };
   console.log(values);
   return (
