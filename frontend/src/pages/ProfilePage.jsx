@@ -288,7 +288,7 @@ const ProfilePage = () => {
     );
   }
 
-  if (!profile && isLoadError) {
+  if (isLoadError) {
     return (
       <>
         <PageHeader eyebrow='Your profile' title='Profile' />

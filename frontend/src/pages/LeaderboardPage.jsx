@@ -1,6 +1,6 @@
 import { Badge, Box, Button, Flex, Grid, HStack, Icon, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import { LuCrown, LuFlame, LuRefreshCw, LuStore, LuTrophy, LuUsers } from "react-icons/lu";
+import { LuCrown, LuFlame, LuRefreshCw, LuStore, LuTriangleAlert, LuTrophy, LuUsers } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import CreditAmount from "../components/ui/CreditAmount";
 import EmptyState from "../components/ui/EmptyState";
@@ -173,12 +173,32 @@ const LeaderboardSkeleton = () => (
 const LeaderboardPage = () => {
   const [period, setPeriod] = useState("week");
   const { userId } = useAuth();
-  const { profile } = useMe();
+  const { profile, isLoadError, refetch: refetchMe, isFetching: fetchingMe } = useMe();
   const { data, isLoading, isError, refetch, isFetching } = useLeaderboard(period);
   const entries = data?.entries ?? [];
   const me = findEntry(entries, userId);
   const isManager = profile?.role === "manager";
   const anyPoints = entries.some((entry) => entry.points > 0);
+
+  // Without /me the role is unknown; ask to retry rather than guess the copy.
+  if (isLoadError) {
+    return (
+      <>
+        <PageHeader eyebrow='Rankings' title='Leaderboard' />
+        <EmptyState
+          icon={LuTriangleAlert}
+          palette='red'
+          title="Couldn't load the leaderboard"
+          description='Check your connection and try again.'
+          layerStyle='panel'
+        >
+          <Button onClick={() => refetchMe()} loading={fetchingMe}>
+            <LuRefreshCw /> Try again
+          </Button>
+        </EmptyState>
+      </>
+    );
+  }
 
   let content;
   if (isLoading) {

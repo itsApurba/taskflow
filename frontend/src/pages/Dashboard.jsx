@@ -34,19 +34,21 @@ const Dashboard = () => {
       // Phones reach the market from the tab bar; here the next-up card leads.
       actionsProps={{ display: { base: "none", sm: "flex" } }}
       actions={
-        <Button asChild>
-          <Link to='/market'>
-            {isManager ? (
-              <>
-                <LuPlus /> Post a task
-              </>
-            ) : (
-              <>
-                <LuStore /> Find a task
-              </>
-            )}
-          </Link>
-        </Button>
+        !isLoadError && (
+          <Button asChild>
+            <Link to='/market'>
+              {isManager ? (
+                <>
+                  <LuPlus /> Post a task
+                </>
+              ) : (
+                <>
+                  <LuStore /> Find a task
+                </>
+              )}
+            </Link>
+          </Button>
+        )
       }
     />
   );
@@ -64,7 +66,7 @@ const Dashboard = () => {
   }
 
   // Without /me the role is unknown; ask to retry rather than guess a worker.
-  if (!profile && isLoadError) {
+  if (isLoadError) {
     return (
       <>
         {header("Your board is one step away.")}

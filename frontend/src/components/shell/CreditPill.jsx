@@ -10,7 +10,7 @@ import { formatNumber } from "../../lib/game";
 // balance failed to load, tapping it retries instead.
 const CreditPill = () => {
   const { profile, isLoadError, refetch, isFetching } = useMe();
-  if (!profile && isLoadError) {
+  if (isLoadError) {
     return (
       <Button
         variant='outline'

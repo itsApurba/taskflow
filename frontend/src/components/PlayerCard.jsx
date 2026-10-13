@@ -20,7 +20,7 @@ const HudStat = ({ label, children }) => (
 // fails for another reason it offers a retry instead.
 const PlayerCard = (props) => {
   const { userName } = useAuth();
-  const { profile, isLoading, isLoadError, refetch, isFetching } = useMe();
+  const { profile, isFirstLoad, isLoadError, refetch, isFetching } = useMe();
   return (
     <Box position='relative' overflow='hidden' rounded='l3' bgGradient='hero' color='white' p={{ base: 4, md: 5 }} boxShadow='glow' {...props}>
       <Box position='absolute' top='-16' right='-12' boxSize='48' rounded='full' bg='whiteAlpha.200' filter='blur(40px)' aria-hidden />
@@ -37,7 +37,7 @@ const PlayerCard = (props) => {
             </Heading>
           </Box>
         </HStack>
-        {isLoading ? (
+        {isFirstLoad ? (
           <Skeleton h='20' rounded='l2' variant='shine' css={{ "--start-color": "rgba(255,255,255,0.15)", "--end-color": "rgba(255,255,255,0.3)" }} />
         ) : profile ? (
           <>
