@@ -1,6 +1,6 @@
 import { Box, Button, Flex, Grid, HStack, Heading, Icon, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
 import moment from "moment";
-import { LuCircleCheckBig, LuGift, LuHourglass, LuPartyPopper, LuPlus, LuStore, LuTimer, LuUsers, LuZap } from "react-icons/lu";
+import { LuCircleCheckBig, LuGift, LuHourglass, LuPartyPopper, LuPlus, LuRefreshCw, LuStore, LuTimer, LuTriangleAlert, LuUsers, LuZap } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import usePenalties from "../../hooks/usePenalties";
@@ -131,8 +131,11 @@ const PendingRedemptions = ({ redemptions }) => (
   </Box>
 );
 
-const summaryFor = ({ isLoading, reviewCount, pendingCount }) => {
+const hasFailed = (query) => !query.data && query.errorUpdatedAt > query.dataUpdatedAt;
+
+const summaryFor = ({ isLoading, loadFailed, reviewCount, pendingCount }) => {
   if (isLoading) return "Loading your team…";
+  if (loadFailed) return "Couldn't load everything waiting on you.";
   const parts = [];
   if (reviewCount) parts.push(`${reviewCount} ${reviewCount === 1 ? "task" : "tasks"} to review`);
   if (pendingCount) parts.push(`${pendingCount} ${pendingCount === 1 ? "reward" : "rewards"} to hand out`);
@@ -153,13 +156,20 @@ const ManagerHome = ({ header }) => {
   const toReview = review.data ?? [];
   const pending = (redemptions.data ?? []).filter((redemption) => redemption.status === "pending");
   const activePenalties = (penalties.data ?? []).filter((penalty) => penalty.status === "active");
-  const isLoading = team.isLoading || review.isLoading || redemptions.isLoading;
+  const reviewFailed = hasFailed(review);
+  const redemptionsFailed = hasFailed(redemptions);
+  const loadFailed = reviewFailed || redemptionsFailed;
+  const isLoading = team.isLoading || (review.isLoading && !reviewFailed) || (redemptions.isLoading && !redemptionsFailed);
+  const retry = () => {
+    if (reviewFailed) review.refetch();
+    if (redemptionsFailed) redemptions.refetch();
+  };
   const sumOf = (field) => members.reduce((sum, member) => sum + (member[field] || 0), 0);
   const openTasks = (tasks.data ?? []).filter((task) => task.status === "open").length;
 
   return (
     <>
-      {header(summaryFor({ isLoading, reviewCount: toReview.length, pendingCount: pending.length }))}
+      {header(summaryFor({ isLoading, loadFailed, reviewCount: toReview.length, pendingCount: pending.length }))}
       <Grid
         templateColumns={{ base: "minmax(0, 1fr)", lg: "minmax(0, 1fr) 20rem", xl: "minmax(0, 1fr) 22rem" }}
         templateAreas={{ base: `"player" "main" "side"`, lg: `"main player" "main side"` }}
@@ -167,13 +177,33 @@ const ManagerHome = ({ header }) => {
         gap={{ base: 5, md: 6 }}
         alignItems='start'
       >
-        <TeamCard team={members} reviewCount={toReview.length} pendingCount={pending.length} penaltyCount={activePenalties.length} isLoading={team.isLoading} />
+        <TeamCard
+          team={members}
+          reviewCount={reviewFailed ? "–" : toReview.length}
+          pendingCount={redemptionsFailed ? "–" : pending.length}
+          penaltyCount={hasFailed(penalties) ? "–" : activePenalties.length}
+          isLoading={team.isLoading}
+        />
         <Stack gridArea='main' gap={{ base: 5, md: 6 }} minW={0}>
           {isLoading ? (
             <Skeleton h='52' rounded='l3' />
           ) : toReview.length > 0 ? (
             <ReviewQueue tasks={toReview} />
-          ) : pending.length === 0 ? (
+          ) : null}
+          {!isLoading && loadFailed ? (
+            <EmptyState
+              size='sm'
+              icon={LuTriangleAlert}
+              palette='red'
+              title="Couldn't load what's waiting on you"
+              description='Submissions or rewards may be waiting. Check your connection and try again.'
+              layerStyle='panel'
+            >
+              <Button onClick={retry} loading={review.isFetching || redemptions.isFetching}>
+                <LuRefreshCw /> Try again
+              </Button>
+            </EmptyState>
+          ) : !isLoading && toReview.length === 0 && pending.length === 0 ? (
             <EmptyState
               icon={LuPartyPopper}
               title='Nothing waiting on you'
