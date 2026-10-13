@@ -446,8 +446,8 @@ const ManagerMarket = () => {
 // The task market: workers shop for tasks and track their own; managers post
 // tasks, review submitted work and see their team's tasks.
 const MarketPage = () => {
-  const { profile, isLoading, error, refetch } = useMe();
-  if (isLoading) {
+  const { profile, isFirstLoad, isLoadError, refetch } = useMe();
+  if (isFirstLoad) {
     return (
       <Stack gap={5}>
         <Skeleton h='16' w={{ base: "full", md: "md" }} rounded='l2' />
@@ -459,7 +459,7 @@ const MarketPage = () => {
     return (
       <>
         <PageHeader eyebrow='Task market' title='Market' />
-        {error?.response?.status !== 404 ? <LoadError onRetry={refetch} /> : <EmptyState icon={LuStore} title='The market is closed' description="This server doesn't run the task market yet." layerStyle='panel' />}
+        {isLoadError ? <LoadError onRetry={refetch} /> : <EmptyState icon={LuStore} title='The market is closed' description="This server doesn't run the task market yet." layerStyle='panel' />}
       </>
     );
   }
