@@ -132,7 +132,7 @@ cd backend
 npm run seed
 ```
 
-This replaces only the `@taskflow.demo` accounts and their data. Every demo account uses the password `taskflow123`:
+This replaces only the `@taskflow.demo` accounts and their data, plus a sprint named "Demo sprint" that it fills with some of those tasks. Every demo account uses the password `taskflow123`:
 
 | Role | Email |
 | --- | --- |

@@ -56,14 +56,15 @@ const findCached = (queryClient, id) => {
   return undefined;
 };
 
-// One task by id. Starts from a populated copy in the market caches when there
-// is one, and always refetches GET /tasks/:id so the status is current.
-export const useMarketTask = (id) => {
+// One task by id (market or board). Starts from a populated copy in the market
+// caches when there is one, and always refetches GET /tasks/:id so the status
+// is current.
+export const useMarketTask = (id, { enabled = true } = {}) => {
   const queryClient = useQueryClient();
   return useQuery({
     queryKey: ["tasks", id],
     queryFn: async () => (await api.get(`/tasks/${id}`)).data,
-    enabled: Boolean(id),
+    enabled: Boolean(id) && enabled,
     retry: false,
     placeholderData: () => findCached(queryClient, id),
   });

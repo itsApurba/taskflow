@@ -6,7 +6,8 @@ import { toaster } from "./ui/toaster";
 import api from "../api/api";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import AssignTaskField from "./AssignTaskField";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMarketTask } from "../hooks/useMarket";
 import EmptyState from "./ui/EmptyState";
 import useGoBack from "../hooks/useGoBack";
 import PageHeader from "./ui/PageHeader";
@@ -42,12 +43,7 @@ const CreateTask = () => {
   const goBack = useGoBack("/tasks");
 
   // A deep link or refresh has no router state, so load the task by id.
-  const loaded = useQuery({
-    queryKey: ["tasks", id],
-    queryFn: async () => (await api.get(`/tasks/${id}`)).data,
-    enabled: Boolean(id) && !state?.task,
-    retry: false,
-  });
+  const loaded = useMarketTask(id, { enabled: !state?.task });
   const task = state?.task ?? loaded.data;
 
   const header = (
