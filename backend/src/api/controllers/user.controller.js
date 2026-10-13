@@ -1,62 +1,48 @@
 const User = require("../models/user.model");
+const Task = require("../models/task.model");
+const Penalty = require("../models/penalty.model");
+const APIError = require("../utils/APIError");
+const asyncHandler = require("../utils/asyncHandler");
+const { signupData } = require("../services/signup");
 
-exports.createUser = async (req, res) => {
-  try {
-    const newUser = new User(req.body);
-    await newUser.save();
-    res.status(201).send(newUser);
-  } catch (error) {
-    console.log(error);
+const assertSelf = (req) => {
+  if (String(req.params.id) !== String(req.user._id)) throw APIError.forbidden("You can only change your own account");
+};
 
-    res.status(400).send(error);
-  }
-};
-exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).send(users);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-};
-exports.getUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).send({ message: "User not found" });
-    }
-    res.status(200).send(user);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-};
-exports.updateUser = async (req, res) => {
-  const { name, email } = req.body;
-  const body = { name, email };
-  console.log(body);
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, body, {
-      new: true,
-    });
-    if (!user) {
-      return res.status(404).send({ message: "User not found" });
-    }
-    res.status(200).send(user);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-};
-exports.deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).send({ message: "User not found" });
-    }
-    res.status(200).send(user);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-};
+exports.createUser = asyncHandler(async (req, res) => {
+  const newUser = await User.create(await signupData(req.body));
+  res.status(201).send(newUser);
+});
+
+exports.getUsers = asyncHandler(async (req, res) => {
+  const users = await User.find();
+  res.status(200).send(users);
+});
+
+exports.getUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) throw APIError.notFound("User not found");
+  res.status(200).send(user);
+});
+
+exports.updateUser = asyncHandler(async (req, res) => {
+  assertSelf(req);
+  const { name, email } = req.body || {};
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    { name, email },
+    { returnDocument: "after", runValidators: true }
+  );
+  if (!user) throw APIError.notFound("User not found");
+  res.status(200).send(user);
+});
+
+exports.deleteUser = asyncHandler(async (req, res) => {
+  assertSelf(req);
+  const user = await User.findByIdAndDelete(req.params.id);
+  if (!user) throw APIError.notFound("User not found");
+  res.status(200).send(user);
+});
 
 exports.searchUser = async (req, res) => {
   let x = 5;
@@ -74,3 +60,56 @@ exports.searchUser = async (req, res) => {
     res.status(400).send(error);
   }
 };
+
+/** Managers for the signup picker (public). */
+exports.getManagers = asyncHandler(async (req, res) => {
+  const managers = await User.find({ role: "manager" }).select("name").sort({ name: 1 });
+  res.status(200).json(managers.map((m) => ({ _id: m._id, name: m.name })));
+});
+
+/** The signed-in user's profile, stats and manager. */
+exports.getMe = asyncHandler(async (req, res) => {
+  const manager = req.user.reportsTo ? await User.findById(req.user.reportsTo).select("name email") : null;
+  res.status(200).json({
+    ...req.user.profile(),
+    manager: manager ? { _id: manager._id, name: manager.name, email: manager.email } : null,
+  });
+});
+
+/** A manager's reports with their game stats. */
+exports.getTeam = asyncHandler(async (req, res) => {
+  const members = await User.find({ reportsTo: req.user._id }).sort({ name: 1 });
+  const ids = members.map((m) => m._id);
+
+  const [taskCounts, penaltyCounts] = await Promise.all([
+    Task.aggregate([
+      { $match: { assignee: { $in: ids }, createdBy: req.user._id } },
+      { $group: { _id: { assignee: "$assignee", status: "$status" }, count: { $sum: 1 } } },
+    ]),
+    Penalty.aggregate([
+      { $match: { worker: { $in: ids }, status: "active" } },
+      { $group: { _id: "$worker", count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const tasksBy = {};
+  taskCounts.forEach(({ _id, count }) => {
+    const key = String(_id.assignee);
+    tasksBy[key] = tasksBy[key] || {};
+    tasksBy[key][_id.status] = count;
+  });
+  const penaltiesBy = Object.fromEntries(penaltyCounts.map(({ _id, count }) => [String(_id), count]));
+
+  res.status(200).json(
+    members.map((member) => {
+      const tasks = tasksBy[String(member._id)] || {};
+      return {
+        ...member.profile(),
+        tasksDone: tasks.done || 0,
+        tasksInProgress: tasks["in progress"] || 0,
+        tasksInReview: tasks["in review"] || 0,
+        activePenalties: penaltiesBy[String(member._id)] || 0,
+      };
+    })
+  );
+});

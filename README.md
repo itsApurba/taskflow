@@ -11,6 +11,11 @@ This project has the following features:
 * Manage sprints
 * User management
 * Task management
+* Gamified task market: managers post tasks with a credit reward, workers claim them, and credits are paid when the manager approves the work
+* Wallet with a credit balance and history, plus XP, levels, streaks and a team leaderboard
+* Rewards store (e.g. "Join a special weekend with Rohit sir", "Skip a boring festival", event tickets) and penalties that workers clear with credits
+
+The backend API, roles and game rules are documented in [`backend/API.md`](backend/API.md).
 
 ```mermaid
 classDiagram
@@ -19,13 +24,19 @@ classDiagram
     +type: "bug" | "feature" | "story"
     +description: String
     +assignee: User
-    +status: "not started" | "in progress" | "completed" | "closed"
+    +status: "open" | "in progress" | "in review" | "done"
+    +reward: Number
+    +createdBy: User
   }
 
   class User {
     +name: String
     +email: String
     +password: String
+    +role: "manager" | "worker"
+    +reportsTo: User
+    +credits: Number
+    +xp: Number
     +tasks: [Task]
   }
 
@@ -114,6 +125,29 @@ cd vackend
 npm start
 ```
 
-6. Access the application in your web browser:
+6. (Optional) Load demo data into the database from `MONGO_URI`:
+
+```bash
+cd backend
+npm run seed
+```
+
+This replaces only the `@taskflow.demo` accounts and their data. Every demo account uses the password `taskflow123`:
+
+| Role | Email |
+| --- | --- |
+| Manager | `rohit@taskflow.demo` (Rohit Sharma) |
+| Worker | `asha@taskflow.demo` (Asha Verma) |
+| Worker | `vikram@taskflow.demo` (Vikram Singh) |
+| Worker | `meera@taskflow.demo` (Meera Iyer) |
+
+7. Run the backend API tests (they start their own in-memory MongoDB, no `.env` needed):
+
+```bash
+cd backend
+npm test
+```
+
+8. Access the application in your web browser:
 
 Open your preferred web browser and visit `http://localhost:5173` to access the taskFlow application.

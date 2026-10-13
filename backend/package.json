@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon ./src/index.js"
+    "dev": "nodemon ./src/index.js",
+    "seed": "node ./src/seed.js",
+    "test": "node --test --test-concurrency=1 tests/game.test.js tests/gamification.test.js"
   },
   "keywords": [],
   "author": "",
@@ -27,5 +29,10 @@
     "passport": "^0.6.0",
     "passport-http-bearer": "^1.0.1",
     "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "expect": "^29.7.0",
+    "mongodb-memory-server": "^10.4.3",
+    "supertest": "^7.3.1"
   }
 }
