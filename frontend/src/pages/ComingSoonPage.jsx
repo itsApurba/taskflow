@@ -3,21 +3,16 @@ import {
   LuArrowLeft,
   LuBadgeCheck,
   LuCircleCheckBig,
-  LuFlame,
   LuGift,
   LuHand,
   LuHistory,
-  LuMedal,
   LuShieldAlert,
   LuStore,
   LuTicket,
-  LuTrophy,
-  LuUser,
   LuWallet,
   LuZap,
 } from "react-icons/lu";
 import { Link } from "react-router-dom";
-import PlayerCard from "../components/PlayerCard";
 import CoinIcon from "../components/ui/CoinIcon";
 import PageHeader from "../components/ui/PageHeader";
 import RewardTierBadge from "../components/ui/RewardTierBadge";
@@ -97,29 +92,6 @@ const FEATURES = {
     previewTitle: "Examples",
     preview: <RewardExamples />,
   },
-  leaderboard: {
-    icon: LuTrophy,
-    palette: "orange",
-    title: "Leaderboard",
-    description: "See who's on top this week and of all time, ranked by credits earned from approved tasks.",
-    perks: [
-      { icon: LuMedal, text: "Weekly and all-time rankings" },
-      { icon: LuZap, text: "Ties broken by XP" },
-      { icon: LuFlame, text: "Streaks on show for everyone" },
-    ],
-  },
-  profile: {
-    icon: LuUser,
-    palette: "brand",
-    title: "Profile",
-    description: "Your level, XP, streak and history in one place.",
-    perks: [
-      { icon: LuZap, text: "Level up as you earn XP" },
-      { icon: LuFlame, text: "Keep a streak going with daily approvals" },
-      { icon: LuMedal, text: "Track how many tasks you've finished" },
-    ],
-    preview: <PlayerCard />,
-  },
 };
 
 // Well-designed placeholder for screens that are on the way.
@@ -171,7 +143,7 @@ const ComingSoonPage = ({ feature }) => {
           </Button>
         </Box>
         {f.preview && (
-          <Box layerStyle={feature === "profile" ? undefined : "panel"} p={feature === "profile" ? 0 : { base: 5, md: 7 }} animation='fade-up'>
+          <Box layerStyle='panel' p={{ base: 5, md: 7 }} animation='fade-up'>
             {f.previewTitle && (
               <Text textStyle='eyebrow' color='fg.muted' mb={3}>
                 {f.previewTitle}

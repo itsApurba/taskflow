@@ -10,8 +10,8 @@ export const NAV = {
   market: { to: "/market", label: "Market", icon: LuStore, paths: ["/market"], soon: true },
   wallet: { to: "/wallet", label: "Wallet", icon: LuWallet, paths: ["/wallet"], soon: true },
   store: { to: "/store", label: "Store", icon: LuGift, paths: ["/store"], soon: true },
-  leaderboard: { to: "/leaderboard", label: "Leaderboard", shortLabel: "Ranks", icon: LuTrophy, paths: ["/leaderboard"], soon: true },
-  profile: { to: "/profile", label: "Profile", icon: LuUser, paths: ["/profile"], soon: true },
+  leaderboard: { to: "/leaderboard", label: "Leaderboard", shortLabel: "Ranks", icon: LuTrophy, paths: ["/leaderboard"] },
+  profile: { to: "/profile", label: "Profile", icon: LuUser, paths: ["/profile"] },
 };
 
 export const SIDEBAR_GROUPS = [

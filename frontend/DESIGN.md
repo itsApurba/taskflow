@@ -17,11 +17,12 @@ TaskFlow is a gamified Jira. People claim tasks like loot, earn credits when the
 | `src/theme.js` | Chakra UI 3 system: tokens, semantic tokens, text/layer styles, keyframes, recipe overrides |
 | `src/lib/game.js` | Game vocabulary: reward tiers, task statuses and lanes, task types, level maths, number formatting |
 | `src/lib/sprints.js` | Sprint phase (upcoming/active/ended), sorting, date range text |
+| `src/lib/leaderboard.js` | Leaderboard periods, medal colours (`RANK_MEDALS`), ordinals, "where you stand" copy |
 | `src/components/ui/` | Reusable presentational components (no data fetching except where noted) |
 | `src/components/shell/` | App chrome: `AppShell`, `TopBar`, `Sidebar`, `BottomNav`, `AuthLayout`, `UserMenu`, `CreditPill`, `Logo`, and `nav.js` |
 | `src/components/` | Feature components: task/sprint cards, lists, forms, pickers, `PlayerCard`, `TaskRow` |
 | `src/pages/` | Route screens |
-| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode` |
+| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode`, `useLogout`, `useGameQueries` (leaderboard, team, my tasks, review queue, rewards, redemptions, penalties) |
 
 ## Tokens
 
@@ -139,6 +140,7 @@ Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the das
 | `XpBar` | XP towards the next level | `xp`, `level`, `nextLevelXp`, `size`, `showLabels`, `inverted` (on gradients) |
 | `StreakBadge` | Flame + days in a row | `days`, `compact` |
 | `RewardTierBadge` | Coin amount + tier name in tier colours | `reward`, `showAmount`, `showTier`, `size` |
+| `RankBadge` | Leaderboard place; gold, silver and bronze for the top three | `rank`, `size` (`sm`-`lg`) |
 | `StatusBadge` / `TaskTypeBadge` | Task status / type chips | `status` / `type` |
 | `UserAvatar` | Initials avatar, stable colour per name | `name`, `size` |
 | `PasswordInput` | Password with show/hide; works as a Formik `Field as` | input props |
@@ -148,6 +150,8 @@ Feature-level building blocks in `src/components/`:
 
 - `PlayerCard`: the HUD card (level, XP, credits, streak) from `useMe`, with a locked state.
 - `TaskRow`: compact, tappable task line for dashboards, sprint details and future lists.
+- `TeamMemberRow`: one report from `GET /users/team` (level, XP bar, balance, task counts, streak, active penalties).
+- `home/`: `WorkerHome` and `ManagerHome` (Home picks one by `profile.role`) and `HomePanels` (`Lane`, `SprintsPanel`, `MiniLeaderboard`).
 - `TaskCard` / `TaskList`, `SprintCard` / `SprintList`, `BoardTabs`.
 - `shell/CreditPill`: the always-visible balance in the top bar, linking to `/wallet`.
 
@@ -155,13 +159,14 @@ Feature-level building blocks in `src/components/`:
 
 - `useMe()` fetches `GET /me` and returns `{ profile, isLoading, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
 - `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
+- `useGameQueries` keeps raw API responses under `["leaderboard", period]`, `["team"]`, `["tasks", "mine"]`, `["tasks", "review"]`, `["rewards"]`, `["redemptions"]` and `["penalties"]`. A screen that changes that data invalidates the matching key (and `["leaderboard"]` after an approval), so Home, Profile and the leaderboard stay current.
 - An assignee can be an id or a populated user; use `assigneeId(task)`.
 
 ## Layout
 
 ### Shell
 
-- **Phones (< 768px):** sticky frosted top bar (logo, credit pill, avatar menu) and a fixed bottom tab bar: Home, Board, **Market** (raised gradient button), Store, Ranks. The wallet is reached from the credit pill; profile, theme and log out from the avatar menu.
+- **Phones (< 768px):** sticky frosted top bar (logo, credit pill, avatar menu) and a fixed bottom tab bar: Home, Board, **Market** (raised gradient button), Store, Ranks. The wallet is reached from the credit pill; profile, theme and log out from the avatar menu (theme and log out are also on the Profile page).
 - **Tablet (768-1023px):** an icon rail (96px) with small labels instead of the tab bar.
 - **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "Soon" tag on unbuilt screens and a "New task" button.
 - When the profile is available the top bar also shows level and XP (from 768px) and the streak (from 480px).

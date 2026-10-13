@@ -1,23 +1,21 @@
 import { Box, IconButton, Menu, Portal, Text, useDisclosure } from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
 import { LuLogOut, LuMoon, LuSun, LuUser, LuWallet } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { useColorMode } from "../../hooks/useColorMode";
+import useLogout from "../../hooks/useLogout";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import UserAvatar from "../ui/UserAvatar";
 
 // Avatar button in the top bar: profile, wallet, theme and log out.
 const UserMenu = () => {
-  const { userName, userEmail, setIsLoggedIn } = useAuth();
+  const { userName, userEmail } = useAuth();
   const { colorMode, toggleColorMode } = useColorMode();
   const logout = useDisclosure();
-  const queryClient = useQueryClient();
+  const signOut = useLogout();
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.removeItem("access_token");
-    queryClient.clear();
+    signOut();
     logout.onClose();
   };
 

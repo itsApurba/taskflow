@@ -9,6 +9,8 @@ import Dashboard from "../pages/Dashboard";
 import TasksPage from "../pages/TasksPage";
 import SprintsPage from "../pages/SprintsPage";
 import ComingSoonPage from "../pages/ComingSoonPage";
+import LeaderboardPage from "../pages/LeaderboardPage";
+import ProfilePage from "../pages/ProfilePage";
 import AppShell from "../components/shell/AppShell";
 import AuthLayout from "../components/shell/AuthLayout";
 
@@ -35,8 +37,8 @@ const AllRoutes = () => {
         <Route path='/market' element={<ComingSoonPage key='market' feature='market' />} />
         <Route path='/wallet' element={<ComingSoonPage key='wallet' feature='wallet' />} />
         <Route path='/store' element={<ComingSoonPage key='store' feature='store' />} />
-        <Route path='/leaderboard' element={<ComingSoonPage key='leaderboard' feature='leaderboard' />} />
-        <Route path='/profile' element={<ComingSoonPage key='profile' feature='profile' />} />
+        <Route path='/leaderboard' element={<LeaderboardPage />} />
+        <Route path='/profile' element={<ProfilePage />} />
       </Route>
       <Route element={<AuthLayout />}>
         <Route path='/login' element={<LoginForm />} />
