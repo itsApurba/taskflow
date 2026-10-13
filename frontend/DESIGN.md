@@ -113,11 +113,11 @@ Use `getRewardTier(reward)` or just `<RewardTierBadge reward={n} />`.
 | `open` (market) | Open | blue | todo |
 | `in progress` | In progress | brand | active |
 | `in review` (market) | In review | orange | review |
-| `completed` | Completed | green | review |
+| `completed` | Completed | green | done |
 | `done` (market) | Done | green | done |
 | `closed` | Closed | gray | done |
 
-Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the dashboard and the board filter. A legacy `completed` task sits in the review lane: the work is done and waiting to be closed. `BOARD_STATUSES` are the ones people may pick on the legacy board; market tasks (they have `createdBy`) move through claim/submit/approve instead, so their cards hide the status and type pickers.
+Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the dashboard and the board filter. A legacy `completed` task sits in the done lane: the board has no approval step, so only market `in review` tasks wait for review. `BOARD_STATUSES` are the ones people may pick on the legacy board; market tasks (`isMarketTask`: they have `createdBy` or a market status) move through claim/submit/approve instead, so their cards hide the status and type pickers and the Edit/Delete actions, and `taskPath` opens them on `/market` instead of the legacy edit form.
 
 **Task types**: `bug` (red), `feature` (blue), `story` (teal), with icons.
 

@@ -18,7 +18,7 @@ import { toaster } from "../components/ui/toaster";
 import useAuth from "../hooks/useAuth";
 import useSprints from "../hooks/useSprints";
 import useTasks from "../hooks/useTasks";
-import { assigneeId, firstName, getTaskStatus } from "../lib/game";
+import { SAMPLE_REWARDS, assigneeId, firstName, getTaskStatus, isMarketTask, taskPath } from "../lib/game";
 import { formatSprintDates, sortSprints, sprintPhase } from "../lib/sprints";
 
 const greeting = () => {
@@ -28,7 +28,7 @@ const greeting = () => {
   return "Good evening";
 };
 
-// One-tap next step for board tasks. Market tasks (with `createdBy`) move
+// One-tap next step for board tasks. Market tasks move
 // through their own claim/submit flow instead.
 const NEXT_STEP = {
   "not started": { status: "in progress", label: "Start task", icon: LuPlay, done: "Task started. Go get it!" },
@@ -36,7 +36,7 @@ const NEXT_STEP = {
 };
 
 const NextUpCard = ({ task, refetch }) => {
-  const step = !task.createdBy ? NEXT_STEP[task.status] : undefined;
+  const step = !isMarketTask(task) ? NEXT_STEP[task.status] : undefined;
   const advance = useMutation({
     mutationFn: () => api.post(`/tasks/status/${task._id}`, { status: step.status }),
     onSuccess: async () => {
@@ -82,7 +82,7 @@ const NextUpCard = ({ task, refetch }) => {
             </Button>
           )}
           <Button asChild variant='outline' colorPalette='gray'>
-            <Link to={`/task/${task._id}`} state={{ task }}>
+            <Link to={taskPath(task)} state={{ task }}>
               Open task
             </Link>
           </Button>
@@ -154,13 +154,6 @@ const SprintsPanel = ({ sprints, isLoading }) => {
   );
 };
 
-// Illustrative rewards until the store is live; the real catalogue comes from each manager.
-const sampleRewards = [
-  { title: "Event ticket", cost: 300 },
-  { title: "Skip a boring festival", cost: 800 },
-  { title: "Join a special weekend with Rohit sir", cost: 1500 },
-];
-
 const StoreTeaser = () => (
   <Box layerStyle='panel' p={{ base: 4, md: 5 }}>
     <Flex justify='space-between' align='center' mb={3} gap={2}>
@@ -177,7 +170,7 @@ const StoreTeaser = () => (
       </Badge>
     </Flex>
     <Stack gap={2}>
-      {sampleRewards.map((reward) => (
+      {SAMPLE_REWARDS.map((reward) => (
         <Flex key={reward.title} justify='space-between' align='center' gap={3} bg='bg.subtle' rounded='l2' px={3} py={2.5}>
           <Text fontSize='sm' fontWeight='medium' lineClamp={1}>
             {reward.title}

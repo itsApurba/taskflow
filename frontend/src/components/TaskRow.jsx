@@ -3,7 +3,7 @@ import { LuChevronRight } from "react-icons/lu";
 import moment from "moment";
 import { Link } from "react-router-dom";
 import RewardTierBadge from "./ui/RewardTierBadge";
-import { getTaskStatus, getTaskType } from "../lib/game";
+import { getTaskStatus, getTaskType, taskPath } from "../lib/game";
 
 // Compact, tappable task line for dashboards and sprint details. Opens the task.
 const TaskRow = ({ task }) => {
@@ -22,7 +22,7 @@ const TaskRow = ({ task }) => {
       _hover={{ bg: "bg.muted" }}
       focusVisibleRing='inside'
     >
-      <Link to={`/task/${task._id}`} state={{ task }}>
+      <Link to={taskPath(task)} state={{ task }}>
         <Flex
           colorPalette={status.palette}
           boxSize={9}

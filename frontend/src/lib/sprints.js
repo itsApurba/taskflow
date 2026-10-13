@@ -3,7 +3,7 @@ import moment from "moment";
 // Where a sprint is in time: upcoming, active or ended, plus how much of it has elapsed.
 export const sprintPhase = (sprint, now = Date.now()) => {
   const start = sprint.startDate ? new Date(sprint.startDate).getTime() : null;
-  const end = sprint.endDate ? new Date(sprint.endDate).getTime() : null;
+  const end = sprint.endDate ? moment(sprint.endDate).endOf("day").valueOf() : null;
   if (start && now < start) {
     return { id: "upcoming", label: "Upcoming", palette: "xp", progress: 0, note: `Starts ${moment(start).fromNow()}` };
   }

@@ -2,15 +2,18 @@ import {
   LuArchive,
   LuBookOpen,
   LuBug,
+  LuCalendarClock,
   LuCircleCheckBig,
   LuCircleDashed,
   LuCrown,
   LuGem,
+  LuGift,
   LuHourglass,
   LuRocket,
   LuSparkles,
   LuStar,
   LuStore,
+  LuTicket,
   LuTimer,
 } from "react-icons/lu";
 
@@ -35,7 +38,7 @@ export const TASK_STATUSES = {
   open: { label: "Open", palette: "blue", icon: LuStore, lane: "todo" },
   "in progress": { label: "In progress", palette: "brand", icon: LuTimer, lane: "active" },
   "in review": { label: "In review", palette: "orange", icon: LuHourglass, lane: "review" },
-  completed: { label: "Completed", palette: "green", icon: LuCircleCheckBig, lane: "review" },
+  completed: { label: "Completed", palette: "green", icon: LuCircleCheckBig, lane: "done" },
   done: { label: "Done", palette: "green", icon: LuCircleCheckBig, lane: "done" },
   closed: { label: "Closed", palette: "gray", icon: LuArchive, lane: "done" },
 };
@@ -45,6 +48,14 @@ export const getTaskStatus = (status) => TASK_STATUSES[status] ?? { label: statu
 // Statuses people can pick on the legacy board. Market tasks move through
 // their own endpoints instead.
 export const BOARD_STATUSES = ["not started", "in progress", "completed", "closed"];
+
+const MARKET_STATUSES = ["open", "in review", "done"];
+
+// Market tasks are posted with a reward and live on the market, not the legacy
+// edit form.
+export const isMarketTask = (task) => Boolean(task?.createdBy) || MARKET_STATUSES.includes(task?.status);
+
+export const taskPath = (task) => (isMarketTask(task) ? "/market" : `/task/${task._id}`);
 
 // Lanes group statuses into "what should I do next" buckets.
 export const TASK_LANES = [
@@ -61,6 +72,13 @@ export const TASK_TYPES = {
 };
 
 export const getTaskType = (type) => TASK_TYPES[type];
+
+// Illustrative rewards until the store is live; the real catalogue comes from each manager.
+export const SAMPLE_REWARDS = [
+  { title: "Event ticket", cost: 300, icon: LuTicket },
+  { title: "Skip a boring festival", cost: 800, icon: LuCalendarClock },
+  { title: "Join a special weekend with Rohit sir", cost: 1500, icon: LuGift },
+];
 
 // Level n needs 100 * (n - 1)^2 XP, matching the gamification API.
 export const xpForLevel = (level) => 100 * Math.max(0, level - 1) ** 2;

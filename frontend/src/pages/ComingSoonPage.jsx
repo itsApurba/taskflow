@@ -2,7 +2,6 @@ import { Badge, Box, Button, Flex, Grid, HStack, Icon, Stack, Text } from "@chak
 import {
   LuArrowLeft,
   LuBadgeCheck,
-  LuCalendarClock,
   LuCircleCheckBig,
   LuFlame,
   LuGift,
@@ -22,7 +21,7 @@ import PlayerCard from "../components/PlayerCard";
 import CoinIcon from "../components/ui/CoinIcon";
 import PageHeader from "../components/ui/PageHeader";
 import RewardTierBadge from "../components/ui/RewardTierBadge";
-import { REWARD_TIERS } from "../lib/game";
+import { REWARD_TIERS, SAMPLE_REWARDS } from "../lib/game";
 
 const TierLegend = () => (
   <Stack gap={2}>
@@ -39,11 +38,7 @@ const TierLegend = () => (
 
 const RewardExamples = () => (
   <Stack gap={2}>
-    {[
-      { title: "Event ticket", cost: 300, icon: LuTicket },
-      { title: "Skip a boring festival", cost: 800, icon: LuCalendarClock },
-      { title: "Join a special weekend with Rohit sir", cost: 1500, icon: LuGift },
-    ].map((reward) => (
+    {SAMPLE_REWARDS.map((reward) => (
       <Flex key={reward.title} justify='space-between' align='center' gap={3} bg='bg.subtle' rounded='l2' px={3} py={2.5}>
         <HStack gap={2.5} minW={0}>
           <Icon as={reward.icon} color='coin.fg' flexShrink={0} />

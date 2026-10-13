@@ -10,7 +10,7 @@ import StatusBadge from "./ui/StatusBadge";
 import TaskTypeBadge from "./ui/TaskTypeBadge";
 import UserAvatar from "./ui/UserAvatar";
 import { toaster } from "./ui/toaster";
-import { BOARD_STATUSES, TASK_TYPES, assigneeId, getTaskStatus } from "../lib/game";
+import { BOARD_STATUSES, TASK_TYPES, assigneeId, getTaskStatus, isMarketTask, taskPath } from "../lib/game";
 
 // Keeps the selects and menu clickable above the card-wide title link.
 const raised = { position: "relative", zIndex: 1 };
@@ -57,8 +57,8 @@ const TaskCard = ({ task, refetch }) => {
   const assigneeName = populatedName ?? getAssignee.data?.data.name;
 
   // Market tasks (posted with a reward) move through claim/submit/approve, so
-  // the board's status and type pickers do not apply to them.
-  const isMarketTask = Boolean(task.createdBy);
+  // the board's pickers, edit form and delete do not apply to them.
+  const isMarket = isMarketTask(task);
   const editState = { task };
   const handleEdit = () => navigate(`/task/${task._id}`, { state: editState });
 
@@ -78,36 +78,38 @@ const TaskCard = ({ task, refetch }) => {
             <TaskTypeBadge type={type} />
             {task.reward != null && <RewardTierBadge reward={task.reward} />}
           </Flex>
-          <Menu.Root positioning={{ placement: "bottom-end" }}>
-            <Menu.Trigger asChild>
-              <IconButton
-                aria-label={`Actions for ${task.title}`}
-                variant='ghost'
-                colorPalette='gray'
-                size='sm'
-                rounded='full'
-                mt={-1}
-                me={-2}
-                minW={{ base: 11, md: 9 }}
-                h={{ base: 11, md: 9 }}
-                {...raised}
-              >
-                <LuEllipsisVertical />
-              </IconButton>
-            </Menu.Trigger>
-            <Portal>
-              <Menu.Positioner>
-                <Menu.Content>
-                  <Menu.Item value='edit' onClick={handleEdit}>
-                    <LuSquarePen /> Edit task
-                  </Menu.Item>
-                  <Menu.Item value='delete' color='fg.error' _highlighted={{ bg: "bg.error" }} onClick={onOpen}>
-                    <LuTrash2 /> Delete task
-                  </Menu.Item>
-                </Menu.Content>
-              </Menu.Positioner>
-            </Portal>
-          </Menu.Root>
+          {!isMarket && (
+            <Menu.Root positioning={{ placement: "bottom-end" }}>
+              <Menu.Trigger asChild>
+                <IconButton
+                  aria-label={`Actions for ${task.title}`}
+                  variant='ghost'
+                  colorPalette='gray'
+                  size='sm'
+                  rounded='full'
+                  mt={-1}
+                  me={-2}
+                  minW={{ base: 11, md: 9 }}
+                  h={{ base: 11, md: 9 }}
+                  {...raised}
+                >
+                  <LuEllipsisVertical />
+                </IconButton>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item value='edit' onClick={handleEdit}>
+                      <LuSquarePen /> Edit task
+                    </Menu.Item>
+                    <Menu.Item value='delete' color='fg.error' _highlighted={{ bg: "bg.error" }} onClick={onOpen}>
+                      <LuTrash2 /> Delete task
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+          )}
         </Flex>
 
         <Box minW={0}>
@@ -118,7 +120,7 @@ const TaskCard = ({ task, refetch }) => {
               _after={{ content: '""', position: "absolute", inset: 0, borderRadius: "l3" }}
               _focusVisible={{ outline: "none", _after: { outline: "2px solid", outlineColor: "brand.focusRing", outlineOffset: "2px" } }}
             >
-              <Link to={`/task/${task._id}`} state={editState}>
+              <Link to={taskPath(task)} state={editState}>
                 {task.title}
               </Link>
             </Box>
@@ -165,7 +167,7 @@ const TaskCard = ({ task, refetch }) => {
               </Text>
             )}
           </HStack>
-          {!isMarketTask && (
+          {!isMarket && (
             <Grid templateColumns='repeat(2, minmax(0, 1fr))' gap={2} flexShrink={0} css={{ width: "100%", [wide]: { width: "auto" } }} {...raised}>
               <NativeSelect.Root css={{ [wide]: { width: "9rem" } }}>
                 <NativeSelect.Field name='status' aria-label={`Status of ${task.title}`} value={status} onChange={(e) => statusMutation.mutate(e.target.value)}>
