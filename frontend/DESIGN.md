@@ -208,7 +208,7 @@ Feature-level building blocks in `src/components/`:
 - Choice of 2-4 options with icons: `RadioCard` (task type). Longer lists: `NativeSelect`, which uses the phone's native picker.
 - Actions at the end: primary on the right, Cancel as `outline` + `gray`; on phones they stack with the primary on top.
 
-## Adding a screen (wallet, store, leaderboard, profile)
+## Adding a screen (wallet, store)
 
 1. Build the page in `src/pages/` and swap it in for the `ComingSoonPage` route in `src/routes/AllRoutes.jsx`.
 2. Remove `soon: true` from its entry in `src/components/shell/nav.js`. Delete its entry from `FEATURES` in `ComingSoonPage.jsx`.
