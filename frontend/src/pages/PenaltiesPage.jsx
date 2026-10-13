@@ -7,14 +7,12 @@ import PenaltyCard from "../components/PenaltyCard";
 import PenaltyFormDialog from "../components/PenaltyFormDialog";
 import StoreTabs from "../components/StoreTabs";
 import { GameLocked, LoadError, SkeletonRows } from "../components/EconomyStates";
-import CoinBurst from "../components/ui/CoinBurst";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import CreditAmount from "../components/ui/CreditAmount";
 import EmptyState from "../components/ui/EmptyState";
 import FilterChips from "../components/ui/FilterChips";
 import PageHeader from "../components/ui/PageHeader";
 import { toaster } from "../components/ui/toaster";
-import useCoinBurst from "../hooks/useCoinBurst";
 import useMe from "../hooks/useMe";
 import usePenalties from "../hooks/usePenalties";
 import { formatNumber } from "../lib/game";
@@ -64,13 +62,11 @@ const WorkerPenalties = ({ profile }) => {
   const queryClient = useQueryClient();
   const penalties = usePenalties();
   const [selected, setSelected] = useState(null);
-  const [burst, fireBurst] = useCoinBurst();
 
   const clear = useMutation({
     mutationFn: (penalty) => api.post(`/penalties/${penalty._id}/clear`),
     onSuccess: (_, penalty) => {
       setSelected(null);
-      fireBurst("Cleared!");
       toaster.create({ title: "Penalty cleared", description: `${penalty.reason}. Fresh start!`, type: "success" });
     },
     onError: (error) => {
@@ -127,7 +123,6 @@ const WorkerPenalties = ({ profile }) => {
         }
         confirmLabel={selected ? `Pay ${formatNumber(selected.cost)} credits` : "Clear"}
       />
-      <CoinBurst burst={burst} />
     </>
   );
 };

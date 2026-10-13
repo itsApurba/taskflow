@@ -213,6 +213,8 @@ const StoreTeaser = () => {
 
 const Dashboard = () => {
   const { userName, userId } = useAuth();
+  const { profile } = useMe();
+  const canPost = profile?.role !== "worker";
   const { data: tasks = [], isLoading, refetch } = useTasks();
   const sprints = useSprints();
 
@@ -241,11 +243,13 @@ const Dashboard = () => {
         // Phones create tasks from the Board tab; here the next-up card leads.
         actionsProps={{ display: { base: "none", sm: "flex" } }}
         actions={
-          <Button asChild>
-            <Link to='/create-task'>
-              <LuPlus /> New task
-            </Link>
-          </Button>
+          canPost && (
+            <Button asChild>
+              <Link to='/create-task'>
+                <LuPlus /> New task
+              </Link>
+            </Button>
+          )
         }
       />
       <Grid

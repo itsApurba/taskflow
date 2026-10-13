@@ -13,10 +13,10 @@ import PageHeader from "../components/ui/PageHeader";
 import SectionHeader from "../components/ui/SectionHeader";
 import StatTile from "../components/ui/StatTile";
 import UserAvatar from "../components/ui/UserAvatar";
+import { useTeam } from "../hooks/useMarket";
 import useMe from "../hooks/useMe";
 import usePenalties from "../hooks/usePenalties";
 import useRedemptions from "../hooks/useRedemptions";
-import useTeam from "../hooks/useTeam";
 import useWallet from "../hooks/useWallet";
 import { formatNumber } from "../lib/game";
 

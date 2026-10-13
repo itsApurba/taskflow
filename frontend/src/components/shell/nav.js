@@ -7,7 +7,7 @@ export const NAV = {
   home: { to: "/", label: "Home", icon: LuHouse, paths: ["/", "/dashboard"] },
   board: { to: "/tasks", label: "Board", icon: LuSquareKanban, paths: ["/tasks", "/task", "/create-task"] },
   sprints: { to: "/sprints", label: "Sprints", icon: LuCalendarRange, paths: ["/sprints", "/sprint", "/create-sprint"] },
-  market: { to: "/market", label: "Market", icon: LuStore, paths: ["/market"], soon: true },
+  market: { to: "/market", label: "Market", icon: LuStore, paths: ["/market"] },
   wallet: { to: "/wallet", label: "Wallet", icon: LuWallet, paths: ["/wallet"] },
   store: { to: "/store", label: "Store", icon: LuGift, paths: ["/store"] },
   leaderboard: { to: "/leaderboard", label: "Leaderboard", shortLabel: "Ranks", icon: LuTrophy, paths: ["/leaderboard"], soon: true },

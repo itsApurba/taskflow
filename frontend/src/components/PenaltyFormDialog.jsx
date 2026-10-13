@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import api from "../api/api";
-import useTeam from "../hooks/useTeam";
+import { useTeam } from "../hooks/useMarket";
 import CoinIcon from "./ui/CoinIcon";
 import { toaster } from "./ui/toaster";
 import { firstName } from "../lib/game";
@@ -28,7 +28,7 @@ const PenaltyFormDialog = ({ open, onClose, workerId }) => {
     mutationFn: (body) => api.post("/penalties", body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["penalties"] });
-      queryClient.invalidateQueries({ queryKey: ["team"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "team"] });
     },
   });
   const members = team.data ?? [];

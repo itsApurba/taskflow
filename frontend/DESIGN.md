@@ -22,7 +22,7 @@ TaskFlow is a gamified Jira. People claim tasks like loot, earn credits when the
 | `src/components/shell/` | App chrome: `AppShell`, `TopBar`, `Sidebar`, `BottomNav`, `AuthLayout`, `UserMenu`, `CreditPill`, `Logo`, and `nav.js` |
 | `src/components/` | Feature components: task/sprint cards, lists, forms, pickers, `PlayerCard`, `TaskRow` |
 | `src/pages/` | Route screens |
-| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode` |
+| `src/hooks/` | `useMe` (player profile), `useTasks`, `useSprints`, `useGoBack` (history back with a fallback for deep links), `useAuth`, `useColorMode`, `useMarket` (market queries and lifecycle mutations), `useTaskFlows` (market actions with their dialogs), `usePayoutCelebration`, and the store and wallet queries `useWallet`, `useRewards`, `useRedemptions`, `usePenalties` |
 
 ## Tokens
 
@@ -85,6 +85,7 @@ Solid buttons get a soft shadow tinted with their own palette automatically.
 - `animation='fade-up'`: entrance for cards and page headers (8px rise, 0.42s).
 - `animation='pop'`: entrance for icons in empty states and placeholders.
 - `animation='float'`: decorative idle bob (auth panel only).
+- `coin-burst` keyframes: the coins flying out of `Celebration`. Each coin sets `--tx`, `--ty` and `--spin`.
 - Hover lift: `transform: translateY(-2px)` plus `boxShadow: card-hover`. Buttons scale to 0.97 when pressed.
 - Entrance animations use `backwards` fill, so hover transforms still work afterwards.
 - `prefers-reduced-motion` turns animations and transitions off globally (in `theme.js`).
@@ -118,7 +119,7 @@ Use `getRewardTier(reward)` or just `<RewardTierBadge reward={n} />`.
 | `done` (market) | Done | green | done |
 | `closed` | Closed | gray | done |
 
-Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the dashboard and the board filter. A legacy `completed` task sits in the done lane: the board has no approval step, so only market `in review` tasks wait for review. `BOARD_STATUSES` are the ones people may pick on the legacy board; market tasks (`isMarketTask`: they have `createdBy` or a market status) move through claim/submit/approve instead, so their cards hide the status and type pickers and the Edit/Delete actions, and `taskPath` opens them on `/market` instead of the legacy edit form.
+Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the dashboard and the board filter. A legacy `completed` task sits in the done lane: the board has no approval step, so only market `in review` tasks wait for review. `BOARD_STATUSES` are the ones people may pick on the legacy board; market tasks (`isMarketTask`: they have `createdBy` or a market status) move through claim/submit/approve instead, so their cards hide the status and type pickers and the Edit/Delete actions, and `taskPath` opens them on their market page (`/market/:id`) instead of the legacy edit form.
 
 **Task types**: `bug` (red), `feature` (blue), `story` (teal), with icons.
 
@@ -143,9 +144,11 @@ Lanes (`TASK_LANES`) group statuses into the "what next" buckets used by the das
 | `StatusBadge` / `TaskTypeBadge` | Task status / type chips | `status` / `type` |
 | `UserAvatar` | Initials avatar, stable colour per name | `name`, `size` |
 | `PasswordInput` | Password with show/hide; works as a Formik `Field as` | input props |
-| `toaster` | `toaster.create({ title, description, type })` | Panel-coloured toasts with a coloured edge; they sit above the phone tab bar |
+| `toaster` | `toaster.create({ title, description, type, action })` | Panel-coloured toasts with a coloured edge; they sit above the phone tab bar. `action: { label, onClick }` adds a button ("Open", "View") |
+| `SegmentedControl` | Pill switch between 2-4 views of one screen (Market / My tasks), styled like `BoardTabs`; full width on phones | `options` (`value`, `label`, `count`, `palette` for the count bubble), `value`, `onChange`, `label` |
 | `SegmentedNav` | Pill switch between sibling routes (like `BoardTabs`), with optional count badges | `tabs` (`to`, `label`, `shortLabel` for phones, `count`, `palette`, `end`), `label` |
-| `CoinBurst` | Short coin-burst celebration in the middle of the screen for payouts and purchases; decorative, pair it with a toast | `burst` from `const [burst, fire] = useCoinBurst()`; call `fire("Redeemed!")` |
+| `NoteDialog` | Asks for a short note before an action (submit work, send it back); bottom sheet on phones | `open`, `onClose`, `onConfirm(note)`, `title`, `description`, `label`, `placeholder`, `required`, `confirmLabel`, `palette`, `icon`, `loading` |
+| `Celebration` | The payout moment: a coin burst, the signed amount and one line. Only for money moments (payouts, redemptions); everything else gets a toast | `open`, `onClose`, `eyebrow`, `amount`, `title`, `description`, `actionLabel`, children = extra actions |
 
 Feature-level building blocks in `src/components/`:
 
@@ -153,6 +156,9 @@ Feature-level building blocks in `src/components/`:
 - `TaskRow`: compact, tappable task line for dashboards, sprint details and future lists.
 - `TaskCard` / `TaskList`, `SprintCard` / `SprintList`, `BoardTabs`.
 - `shell/CreditPill`: the always-visible balance in the top bar, linking to `/wallet`.
+- `MarketTaskCard`: a market listing shown like a shop item: a price tag in the reward's tier colour, title, type, poster and an `action` (Claim). `preview` renders it without links for the post form.
+- `QuestCard`: a claimed task with its status, reward, assignee (`showPerson`), latest note and next actions as children. Used by My tasks, the review queue and the manager's team view. `NoteQuote` (same file) shows a worker's or manager's note.
+- `TaskLifecycle`: the four-step tracker (Posted, Claimed, In review, Paid) with dates; a sent-back task shows "Fixing" in orange.
 - Store and wallet: `StoreTabs` (Rewards `/store`, Redemptions `/store/redemptions`, Penalties `/store/penalties`), `RewardCard` (loot-style store item; Redeem or manage menu), `RewardFormDialog`, `RedemptionRow`, `PenaltyCard`, `PenaltyFormDialog`, `LedgerList` (wallet history grouped by day) and `EconomyStates` (loading, error, locked and no-manager states).
 
 ## Data and the game backend
@@ -160,7 +166,9 @@ Feature-level building blocks in `src/components/`:
 - `useMe()` fetches `GET /me` and returns `{ profile, isLoading, ... }`. On a backend without the gamification API the request 404s and `profile` is `null`. Every game widget must handle `profile === null` by showing a locked or neutral state (the credit pill reads "Wallet", `LevelBadge` shows a lock, `PlayerCard` explains what is coming). Never invent numbers.
 - `useTasks()` (`["tasks"]`) and `useSprints()` (`["sprints"]`) share caches with the forms, which refetch them after saving. Invalidate `["me"]` after anything that changes credits or XP.
 - An assignee can be an id or a populated user; use `assigneeId(task)`.
-- Store and wallet caches: `useWallet` (`["wallet"]`), `useRewards` (`["rewards"]`), `useRedemptions` (`["redemptions"]`), `usePenalties` (`["penalties"]`), `useTeam` (`["team"]`, managers). A redemption invalidates `me`, `wallet`, `rewards` and `redemptions`; clearing a penalty invalidates `me`, `wallet` and `penalties`.
+- Market data lives in `src/hooks/useMarket.js`: `useMarket()` (`["market"]`), `useMyTasks()` (`["tasks", "mine"]`), `useReviewQueue()` (`["tasks", "review"]`), `useTeam()` and `useMarketTask(id)` (`["tasks", id]`, seeded from the list caches). `useTaskAction(action)` runs claim/submit/approve/reject/create/update/delete and then `invalidateMarket`, which refreshes the market, every `["tasks", ...]` query, `["me"]`, `["wallet"]`, `["leaderboard"]` and the team. Use the same keys on other screens so a payout shows up everywhere.
+- `useTaskFlows()` wraps those actions with their confirm/note dialogs, toasts and the approval `Celebration`; render its `dialogs` once per page.
+- Store and wallet caches: `useWallet` (`["wallet"]`), `useRewards` (`["rewards"]`), `useRedemptions` (`["redemptions"]`), `usePenalties` (`["penalties"]`), `useTeam` from `useMarket.js` (`["users", "team"]`, managers). Issuing a penalty also refreshes the team. A redemption invalidates `me`, `wallet`, `rewards` and `redemptions`; clearing a penalty invalidates `me`, `wallet` and `penalties`.
 
 ## Layout
 
@@ -168,7 +176,7 @@ Feature-level building blocks in `src/components/`:
 
 - **Phones (< 768px):** sticky frosted top bar (logo, credit pill, avatar menu) and a fixed bottom tab bar: Home, Board, **Market** (raised gradient button), Store, Ranks. The wallet is reached from the credit pill; profile, theme and log out from the avatar menu.
 - **Tablet (768-1023px):** an icon rail (96px) with small labels instead of the tab bar.
-- **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "Soon" tag on unbuilt screens and a "New task" button.
+- **Desktop (1024px+):** a 256px sidebar with "Work" and "Play" groups, a "Soon" tag on unbuilt screens and a "New task" button (hidden from workers, like every "New task" action).
 - When the profile is available the top bar also shows level and XP (from 768px) and the streak (from 480px).
 - Content is capped at `6xl` (1152px) with gutters of 16px (phones), 24px (`md`) and 32px (`lg`). The phone layout reserves space for the tab bar and the safe-area inset at the bottom.
 - `src/components/shell/nav.js` is the single list of destinations. `paths` decides which item is active; `soon: true` shows the "Soon" tag.
@@ -196,7 +204,7 @@ Feature-level building blocks in `src/components/`:
 - Choice of 2-4 options with icons: `RadioCard` (task type). Longer lists: `NativeSelect`, which uses the phone's native picker.
 - Actions at the end: primary on the right, Cancel as `outline` + `gray`; on phones they stack with the primary on top.
 
-## Adding a screen (market, leaderboard, profile)
+## Adding a screen (leaderboard, profile)
 
 1. Build the page in `src/pages/` and swap it in for the `ComingSoonPage` route in `src/routes/AllRoutes.jsx`.
 2. Remove `soon: true` from its entry in `src/components/shell/nav.js`. Delete its entry from `FEATURES` in `ComingSoonPage.jsx`.

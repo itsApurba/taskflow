@@ -8,14 +8,13 @@ import RewardCard from "../components/RewardCard";
 import RewardFormDialog from "../components/RewardFormDialog";
 import StoreTabs from "../components/StoreTabs";
 import { GameLocked, LoadError, NoManager, SkeletonCards } from "../components/EconomyStates";
-import CoinBurst from "../components/ui/CoinBurst";
+import Celebration from "../components/ui/Celebration";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import CreditAmount from "../components/ui/CreditAmount";
 import EmptyState from "../components/ui/EmptyState";
 import FilterChips from "../components/ui/FilterChips";
 import PageHeader from "../components/ui/PageHeader";
 import { toaster } from "../components/ui/toaster";
-import useCoinBurst from "../hooks/useCoinBurst";
 import useMe from "../hooks/useMe";
 import useRedemptions from "../hooks/useRedemptions";
 import useRewards from "../hooks/useRewards";
@@ -33,19 +32,17 @@ const WorkerStore = ({ profile }) => {
   const rewards = useRewards();
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState(null);
-  const [burst, fireBurst] = useCoinBurst();
+  // The last redemption stays put while the celebration closes.
+  const [redeemed, setRedeemed] = useState(null);
+  const [celebrating, setCelebrating] = useState(false);
   const balance = profile.credits;
 
   const redeem = useMutation({
     mutationFn: (reward) => api.post(`/rewards/${reward._id}/redeem`),
     onSuccess: (_, reward) => {
       setSelected(null);
-      fireBurst("Redeemed!");
-      toaster.create({
-        title: `Redeemed: ${reward.title}`,
-        description: `${firstName(profile.manager?.name || "Your manager")} will hand it over. Track it under Redemptions.`,
-        type: "success",
-      });
+      setRedeemed(reward);
+      setCelebrating(true);
     },
     onError: (error) => {
       setSelected(null);
@@ -128,7 +125,18 @@ const WorkerStore = ({ profile }) => {
         }
         confirmLabel={selected ? `Redeem for ${formatNumber(selected.cost)}` : "Redeem"}
       />
-      <CoinBurst burst={burst} />
+      <Celebration
+        open={celebrating}
+        onClose={() => setCelebrating(false)}
+        eyebrow='Redeemed'
+        amount={redeemed ? -redeemed.cost : undefined}
+        title={redeemed?.title ?? ""}
+        description={`${firstName(profile.manager?.name || "Your manager")} will hand it over. Track it under Redemptions.`}
+      >
+        <Button asChild variant='ghost' size='sm' colorPalette='coin' onClick={() => setCelebrating(false)}>
+          <Link to='/store/redemptions'>See my redemptions</Link>
+        </Button>
+      </Celebration>
     </>
   );
 };

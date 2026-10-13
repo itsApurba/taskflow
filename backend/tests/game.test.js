@@ -213,6 +213,31 @@ describe("market lifecycle", () => {
       .expect(409);
   });
 
+  test("a claimed or in-review market task cannot be deleted or have its reward changed", async () => {
+    const { manager, workers } = await team(1);
+    const task = await postTask(manager, { reward: 50 });
+    await api().post(`/api/tasks/${task._id}/claim`).set(workers[0].auth).expect(200);
+    for (const step of ["claimed", "submitted"]) {
+      if (step === "submitted") {
+        await api().post(`/api/tasks/${task._id}/submit`).set(workers[0].auth).send({ note: "done" }).expect(200);
+      }
+      await api().patch(`/api/tasks/${task._id}`).set(manager.auth).send({ reward: 5 }).expect(409);
+      await api().delete(`/api/tasks/${task._id}`).set(manager.auth).expect(409);
+      const stored = await Task.findById(task._id);
+      expect(stored.reward).toBe(50);
+      expect(String(stored.assignee)).toBe(workers[0].user._id);
+    }
+  });
+
+  test("an open market task can still be edited and deleted by its manager", async () => {
+    const { manager } = await team(0);
+    const task = await postTask(manager, { reward: 50 });
+    const edited = await api().patch(`/api/tasks/${task._id}`).set(manager.auth).send({ reward: 80 }).expect(200);
+    expect(edited.body.reward).toBe(80);
+    await api().delete(`/api/tasks/${task._id}`).set(manager.auth).expect(200);
+    expect(await Task.findById(task._id)).toBeNull();
+  });
+
   test("invalid ids and validation failures are 400 JSON errors", async () => {
     const { manager } = await team(0);
     const bad = await api().post("/api/tasks/not-an-id/approve").set(manager.auth).expect(400);
