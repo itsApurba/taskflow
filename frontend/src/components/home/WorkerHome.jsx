@@ -18,7 +18,8 @@ import {
 import { Link } from "react-router-dom";
 import api from "../../api/api";
 import useAuth from "../../hooks/useAuth";
-import { usePenalties, useRewards } from "../../hooks/useGameQueries";
+import usePenalties from "../../hooks/usePenalties";
+import useRewards from "../../hooks/useRewards";
 import useSprints from "../../hooks/useSprints";
 import { assigneeId, formatNumber, getTaskStatus, isMarketTask, taskPath } from "../../lib/game";
 import PlayerCard from "../PlayerCard";
@@ -150,7 +151,7 @@ const PenaltyAlert = ({ penalties, credits }) => {
         </Box>
       </HStack>
       <Button asChild colorPalette='red' variant={canClear ? "solid" : "outline"} flexShrink={0}>
-        <Link to='/wallet'>{canClear ? "Clear it now" : "View in wallet"}</Link>
+        <Link to='/store/penalties'>{canClear ? "Clear it now" : "View penalties"}</Link>
       </Button>
     </Flex>
   );

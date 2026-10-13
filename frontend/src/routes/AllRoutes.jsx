@@ -8,12 +8,15 @@ import HomePage from "../pages/HomePage";
 import Dashboard from "../pages/Dashboard";
 import TasksPage from "../pages/TasksPage";
 import SprintsPage from "../pages/SprintsPage";
-import ComingSoonPage from "../pages/ComingSoonPage";
 import LeaderboardPage from "../pages/LeaderboardPage";
 import ProfilePage from "../pages/ProfilePage";
 import MarketPage from "../pages/MarketPage";
 import MarketTaskPage from "../pages/MarketTaskPage";
 import PostTaskPage from "../pages/PostTaskPage";
+import WalletPage from "../pages/WalletPage";
+import StorePage from "../pages/StorePage";
+import RedemptionsPage from "../pages/RedemptionsPage";
+import PenaltiesPage from "../pages/PenaltiesPage";
 import AppShell from "../components/shell/AppShell";
 import AuthLayout from "../components/shell/AuthLayout";
 
@@ -37,13 +40,14 @@ const AllRoutes = () => {
         <Route path='/sprints' element={<SprintsPage />} />
         <Route path='/create-sprint' element={<CreateSprint />} />
         <Route path='/sprint/:id' element={<CreateSprint />} />
-        {/* Placeholders until the game screens are built; replace each with its page. */}
         <Route path='/market' element={<MarketPage />} />
         <Route path='/market/new' element={<PostTaskPage key='new' />} />
         <Route path='/market/:id' element={<MarketTaskPage />} />
         <Route path='/market/:id/edit' element={<PostTaskPage key='edit' />} />
-        <Route path='/wallet' element={<ComingSoonPage key='wallet' feature='wallet' />} />
-        <Route path='/store' element={<ComingSoonPage key='store' feature='store' />} />
+        <Route path='/wallet' element={<WalletPage />} />
+        <Route path='/store' element={<StorePage />} />
+        <Route path='/store/redemptions' element={<RedemptionsPage />} />
+        <Route path='/store/penalties' element={<PenaltiesPage />} />
         <Route path='/leaderboard' element={<LeaderboardPage />} />
         <Route path='/profile' element={<ProfilePage />} />
       </Route>

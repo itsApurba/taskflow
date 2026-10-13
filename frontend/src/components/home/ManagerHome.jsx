@@ -3,7 +3,8 @@ import moment from "moment";
 import { LuCircleCheckBig, LuGift, LuHourglass, LuPartyPopper, LuPlus, LuStore, LuTimer, LuUsers, LuZap } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import { usePenalties, useRedemptions } from "../../hooks/useGameQueries";
+import usePenalties from "../../hooks/usePenalties";
+import useRedemptions from "../../hooks/useRedemptions";
 import { useReviewQueue, useTeam } from "../../hooks/useMarket";
 import useSprints from "../../hooks/useSprints";
 import useTasks from "../../hooks/useTasks";
@@ -70,8 +71,8 @@ const TeamCard = ({ team, reviewCount, pendingCount, penaltyCount, isLoading }) 
       </Flex>
       <Grid templateColumns='repeat(3, minmax(0, 1fr))' gap={2}>
         <HudStat label='To review' value={reviewCount} to='/market' />
-        <HudStat label='Rewards' value={pendingCount} to='/store' />
-        <HudStat label='Penalties' value={penaltyCount} />
+        <HudStat label='Rewards' value={pendingCount} to='/store/redemptions' />
+        <HudStat label='Penalties' value={penaltyCount} to='/store/penalties' />
       </Grid>
     </Stack>
   </Box>
@@ -108,7 +109,7 @@ const ReviewQueue = ({ tasks }) => (
 
 const PendingRedemptions = ({ redemptions }) => (
   <Box layerStyle='panel' p={{ base: 2, md: 3 }} animation='fade-up'>
-    <SectionHeader title='Rewards to hand out' count={redemptions.length} as='h3' px={2} pt={1} mb={1} to='/store' linkLabel='Store' />
+    <SectionHeader title='Rewards to hand out' count={redemptions.length} as='h3' px={2} pt={1} mb={1} to='/store/redemptions' linkLabel='All' />
     <Stack gap={0.5}>
       {redemptions.slice(0, 4).map((redemption) => (
         <Flex key={redemption._id} align='center' gap={3} px={3} py={2.5} minH={14}>
