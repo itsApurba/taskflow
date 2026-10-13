@@ -1,30 +1,24 @@
-import { Box, Flex, Separator, Spinner } from "@chakra-ui/react";
-import { useColorModeValue } from "../hooks/useColorMode";
-import { useQuery } from "@tanstack/react-query";
-import api from "../api/api";
+import { SimpleGrid, Skeleton } from "@chakra-ui/react";
 import TaskCard from "./TaskCard";
 
-const TaskList = () => {
-  const { isLoading, data, refetch } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: async () => {
-      const res = await api.get("/tasks");
-      return res.data.reverse();
-    },
-  });
+// Grid of task cards with a loading skeleton; `empty` renders when there is nothing to show.
+const TaskList = ({ tasks, isLoading, refetch, empty }) => {
+  if (isLoading) {
+    return (
+      <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} h='44' rounded='l3' />
+        ))}
+      </SimpleGrid>
+    );
+  }
+  if (!tasks?.length) return empty ?? null;
   return (
-    <Box rounded={"lg"} bg={useColorModeValue("gray.100", "gray.900")} boxShadow={"lg"} p={{ base: 4, md: 8 }}>
-      <Separator />
-      {isLoading ? (
-        <Flex w={'full'}>
-          <Spinner />
-        </Flex>
-      ) : (
-        data?.map((task) => {
-          return <TaskCard key={task._id} task={task} refetch={refetch} />;
-        })
-      )}
-    </Box>
+    <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
+      {tasks.map((task) => (
+        <TaskCard key={task._id} task={task} refetch={refetch} />
+      ))}
+    </SimpleGrid>
   );
 };
 
