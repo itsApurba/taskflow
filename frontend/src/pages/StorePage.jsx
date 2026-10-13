@@ -59,7 +59,8 @@ const WorkerStore = ({ profile }) => {
   if (rewards.isError) return <LoadError what='the store' onRetry={rewards.refetch} />;
 
   const all = rewards.data ?? [];
-  const affordable = all.filter((r) => !isSoldOut(r) && r.cost <= balance);
+  const inStock = all.filter((r) => !isSoldOut(r));
+  const affordable = inStock.filter((r) => r.cost <= balance);
   const visible = filter === "affordable" ? affordable : all;
   const after = selected ? balance - selected.cost : 0;
 
@@ -91,7 +92,11 @@ const WorkerStore = ({ profile }) => {
               icon={LuGift}
               palette='coin'
               title='Nothing in reach yet'
-              description={`The cheapest reward is ${formatNumber(Math.min(...all.map((r) => r.cost)))} credits. Claim a task to get there.`}
+              description={
+                inStock.length === 0
+                  ? "Everything is sold out right now. Keep earning while it's restocked."
+                  : `The cheapest reward is ${formatNumber(Math.min(...inStock.map((r) => r.cost)))} credits. Claim a task to get there.`
+              }
             >
               <Button asChild>
                 <Link to='/market'>Open the market</Link>

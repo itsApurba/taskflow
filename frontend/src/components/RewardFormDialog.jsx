@@ -34,6 +34,14 @@ const toValues = (reward) => ({
   active: reward?.active ?? true,
 });
 
+const toBody = (values) => ({
+  title: values.title.trim(),
+  description: values.description.trim(),
+  cost: Number(values.cost),
+  stock: values.limited ? Number(values.stock) : null,
+  active: values.active,
+});
+
 const SwitchRow = ({ label, hint, checked, onChange }) => (
   <Switch.Root checked={checked} onCheckedChange={(e) => onChange(e.checked)} colorPalette='brand' w='full' justifyContent='space-between' gap={4}>
     <Switch.HiddenInput />
@@ -76,15 +84,11 @@ const RewardFormDialog = ({ open, onClose, reward }) => {
               initialValues={toValues(reward)}
               validationSchema={RewardSchema}
               onSubmit={async (values) => {
-                const body = {
-                  title: values.title.trim(),
-                  description: values.description.trim(),
-                  cost: Number(values.cost),
-                  stock: values.limited ? Number(values.stock) : null,
-                  active: values.active,
-                };
+                const body = toBody(values);
+                const original = editing ? toBody(toValues(reward)) : {};
+                const changes = Object.fromEntries(Object.entries(body).filter(([key, value]) => !editing || value !== original[key]));
                 try {
-                  await save.mutateAsync(body);
+                  await save.mutateAsync(changes);
                   toaster.create({
                     title: editing ? "Reward updated" : "Reward added",
                     description: editing ? undefined : body.active ? "It's live in the store." : "It's hidden until you show it.",
