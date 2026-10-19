@@ -33,4 +33,5 @@ const RedemptionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+RedemptionSchema.index({ reward: 1 });
 module.exports = mongoose.model("Redemption", RedemptionSchema);

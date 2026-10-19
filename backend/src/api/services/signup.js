@@ -9,6 +9,9 @@ const APIError = require("../utils/APIError");
  */
 async function signupData(body = {}) {
   const { name, email, password } = body;
+  if (require("./demoFixture").ACCOUNTS.some(([, demo]) => email?.toLowerCase() === demo)) {
+    throw APIError.forbidden("This email is reserved for the seeded demo account");
+  }
   const role = body.role || "worker";
   if (!User.ROLES.includes(role)) throw APIError.badRequest(`role must be one of: ${User.ROLES.join(", ")}`);
 

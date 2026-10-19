@@ -17,6 +17,7 @@ import WalletPage from "../pages/WalletPage";
 import StorePage from "../pages/StorePage";
 import RedemptionsPage from "../pages/RedemptionsPage";
 import PenaltiesPage from "../pages/PenaltiesPage";
+import RestorePage from "../pages/RestorePage";
 import AppShell from "../components/shell/AppShell";
 import AuthLayout from "../components/shell/AuthLayout";
 
@@ -50,6 +51,7 @@ const AllRoutes = () => {
         <Route path='/store/penalties' element={<PenaltiesPage />} />
         <Route path='/leaderboard' element={<LeaderboardPage />} />
         <Route path='/profile' element={<ProfilePage />} />
+        <Route path='/restore' element={<RestorePage />} />
       </Route>
       <Route element={<AuthLayout />}>
         <Route path='/login' element={<LoginForm />} />

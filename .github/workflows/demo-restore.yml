@@ -1,0 +1,23 @@
+name: Hourly demo restoration
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: taskflow-demo-restore
+  cancel-in-progress: false
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Restore only if demo data changed
+        env:
+          RESTORE_URL: ${{ secrets.TASKFLOW_DEMO_RESTORE_URL }}
+          RESTORE_SECRET: ${{ secrets.TASKFLOW_DEMO_RESTORE_SECRET }}
+        run: |
+          test -n "$RESTORE_URL" && test -n "$RESTORE_SECRET"
+          curl --fail-with-body --silent --show-error --max-time 240 \
+            --request POST --header "Authorization: Bearer $RESTORE_SECRET" \
+            "$RESTORE_URL"
