@@ -5,7 +5,7 @@ claim and finish them, and managers approve the work to pay out credits and XP.
 Workers spend credits in their manager's rewards store or to clear penalties.
 
 All routes live under `/api`. Every route needs `Authorization: Bearer <accessToken>`
-except `/auth/*` and `GET /users/managers`.
+except `/auth/*` and `GET /users/managers`. `POST /restore/hourly` instead requires the server's scheduler secret (not a user JWT).
 
 ## Conventions
 
@@ -21,6 +21,14 @@ except `/auth/*` and `GET /users/managers`.
   | 409 | Not allowed in the current state: task not open/in review, already approved/cleared/fulfilled, `Insufficient credits`, `This reward is out of stock`, duplicate email |
 
 - User objects never contain `password`.
+
+## Demo restoration
+
+- `GET /restore`: authenticated capability check, `{ "canRestore": true|false }`; never mutates data.
+- `POST /restore`: requires one of the four documented demo accounts' JWTs and exactly the JSON body `{ "confirm": true }`. Account/email/ID selectors are rejected. Restores all four demo accounts' dataset while preserving existing passwords, IDs and sessions.
+- `POST /restore/hourly`: requires `Authorization: Bearer <DEMO_RESTORE_SECRET>`. Checks at most once per hour across all instances; calls the same restoration service as manual restore and `npm run seed`. No user selection.
+
+Success is `{ "restored": true, "reason": "restored" }`, `{ "restored": false, "reason": "unchanged" }`, or (scheduler only) `{ "restored": false, "reason": "not-due" }`. Responses are not cacheable. Concurrent demo-affecting writes/restores return `409` while the dataset is busy. Mixed real/demo ownership also returns `409` without application writes rather than damaging shared data. See the README's hourly restoration section for scheduler setup and legacy sprint preservation.
 
 ## Roles and teams
 

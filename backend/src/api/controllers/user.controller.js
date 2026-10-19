@@ -31,6 +31,11 @@ exports.getUser = asyncHandler(async (req, res) => {
 exports.updateUser = asyncHandler(async (req, res) => {
   assertSelf(req);
   const { name, email } = req.body || {};
+  const demoEmails = require("../services/demoFixture").ACCOUNTS.map(([, value]) => value);
+  if (email !== undefined && email !== req.user.email &&
+      (demoEmails.includes(req.user.email) || demoEmails.includes(email?.toLowerCase()))) {
+    throw APIError.forbidden("Demo account email addresses are reserved and cannot be changed");
+  }
   const user = await User.findByIdAndUpdate(
     req.params.id,
     { name, email },

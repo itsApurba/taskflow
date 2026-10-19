@@ -17,6 +17,7 @@ const router = express.Router();
 router.get("/managers", getManagers);
 
 router.use(authenticate);
+router.use(require('../services/demoRestore').guardDemoMutation);
 
 router.get("/", getUsers);
 router.get("/search", searchUser);

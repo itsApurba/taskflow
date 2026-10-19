@@ -4,7 +4,8 @@ const Sprint = require("../models/sprint.model");
 
 exports.createSprint = async (req, res) => {
     try {
-      const sprint = new Sprint(req.body);
+      const { name, startDate, endDate, tasks } = req.body;
+      const sprint = new Sprint({ name, startDate, endDate, tasks });
       await sprint.save();
       res.status(201).json(sprint);
     } catch (error) {
@@ -35,7 +36,8 @@ exports.getSprintById = async (req, res) => {
 
 exports.updateSprint = async (req, res) => {
   try {
-    const sprint = await Sprint.findByIdAndUpdate(req.params.id, req.body, {
+    const { name, startDate, endDate, tasks } = req.body;
+    const sprint = await Sprint.findByIdAndUpdate(req.params.id, { name, startDate, endDate, tasks }, {
       returnDocument: "after",
     });
     if(!sprint) {

@@ -1,5 +1,5 @@
 import { Box, IconButton, Menu, Portal, Text, useDisclosure } from "@chakra-ui/react";
-import { LuLogOut, LuMoon, LuSun, LuUser, LuWallet } from "react-icons/lu";
+import { LuLogOut, LuMoon, LuRotateCcw, LuSun, LuUser, LuWallet } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { useColorMode } from "../../hooks/useColorMode";
@@ -47,6 +47,11 @@ const UserMenu = () => {
               <Menu.Item value='wallet' asChild>
                 <Link to='/wallet'>
                   <LuWallet /> Wallet
+                </Link>
+              </Menu.Item>
+              <Menu.Item value='restore' asChild>
+                <Link to='/restore'>
+                  <LuRotateCcw /> Restore demo
                 </Link>
               </Menu.Item>
               <Menu.Item value='theme' onClick={toggleColorMode} closeOnSelect={false}>

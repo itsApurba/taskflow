@@ -19,11 +19,13 @@ router.get('/', (req, res) => {
 })
 
 // Public: /auth/*, and /users/managers (the user router authenticates the rest itself).
+router.use('/restore', require('./restore.router'))
 router.use('/auth', authRoutes)
 router.use('/users', userRoutes)
 
 // Everything below requires a JWT.
 router.use(authenticate)
+router.use(require('../services/demoRestore').guardDemoMutation)
 router.get('/me', getMe)
 router.get('/market', getMarket)
 router.get('/wallet', getWallet)

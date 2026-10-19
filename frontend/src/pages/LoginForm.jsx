@@ -5,7 +5,7 @@ import { LuMail } from "react-icons/lu";
 import { toaster } from "../components/ui/toaster";
 import PasswordInput from "../components/ui/PasswordInput";
 import api from "../api/api";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import { firstName } from "../lib/game";
 
@@ -15,6 +15,7 @@ const SignUpSchema = Yup.object().shape({
 });
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUserEmail, setIsLoggedIn, setUserName, setUserId } = useAuth();
   return (
     <Stack gap={6}>
@@ -45,7 +46,7 @@ const LoginForm = () => {
             setUserName(user.name);
             setUserEmail(user.email);
             setUserId(user._id);
-            navigate("/dashboard");
+            navigate(location.state?.from === "/restore" ? "/restore" : "/dashboard");
           } catch (error) {
             toaster.create({
               title: "Invalid Credentials",

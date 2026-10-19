@@ -15,7 +15,7 @@ Log in with any seeded demo account. Every account uses the password **`taskflow
 | Worker | Vikram Singh | `vikram@taskflow.demo` | `taskflow123` | Clear his active penalty ("Missed the sprint demo", 40 credits) from Store → Penalties. |
 | Worker | Meera Iyer | `meera@taskflow.demo` | `taskflow123` | Earned the biggest single payout this week; check her wallet history, cleared penalty and pending coffee redemption. |
 
-Anyone can also sign up as a new manager or worker (workers pick the manager they report to). The demo data can be reset with `npm run seed` (see [Getting started](#getting-started)).
+Anyone can also sign up as a new manager or worker (workers pick the manager they report to). Sign in with a demo account and visit **[/restore](https://taskflow-one.vercel.app/restore)** (also in the account menu), then confirm to restore the demo. Opening the page never changes data. Local seeding uses the same restoration path (see [Getting started](#getting-started)).
 
 | Market (desktop) | Leaderboard (desktop) |
 | --- | --- |
@@ -130,7 +130,9 @@ cd backend
 npm run seed
 ```
 
-This creates the four demo accounts above with tasks, rewards, redemptions and penalties, plus a sprint named "Demo sprint" holding six of those tasks. It replaces only the `@taskflow.demo` accounts, their data and that sprint, so run it again any time to reset the demo.
+This creates the four exact demo accounts above with the established tasks, rewards, redemptions and penalties, plus an explicitly demo-owned sprint named "Demo sprint" holding six tasks. Running it again restores changed/missing/extra demo records, or does nothing if unchanged. Existing account IDs, passwords, creation dates and refresh sessions are preserved; only a missing demo account receives the documented initial password. Other addresses, including other `@taskflow.demo` addresses, are not demo identities. The four documented addresses are reserved against public registration/email changes.
+
+Do not run the seed against production as a development test. The test suite uses its own disposable in-memory MongoDB.
 
 ### 4. Run it
 
@@ -177,6 +179,22 @@ Vercel runs functions with `NODE_ENV=production`, which hides internal error det
 cd backend
 MONGO_URI='mongodb+srv://user:pass@cluster.mongodb.net/taskflow' npm run seed
 ```
+
+### Hourly demo restoration
+
+Vercel functions are short-lived, so there is no in-process timer. The repository's `Hourly demo restoration` GitHub Actions workflow calls `POST /api/restore/hourly` on an hourly schedule (and supports manual dispatch). This works with Vercel Hobby, whose native cron cannot run hourly. GitHub schedules run from the default branch and may be delayed; they are best-effort hourly, not an exact wall-clock SLA.
+
+To enable it after deployment:
+
+1. Generate a random secret (e.g. `openssl rand -hex 32`), set it as backend **`DEMO_RESTORE_SECRET`**, and redeploy the backend.
+2. Set repository Actions secrets **`TASKFLOW_DEMO_RESTORE_URL`** to the backend's full HTTPS endpoint, e.g. `https://taskflow-api-one.vercel.app/api/restore/hourly`, and **`TASKFLOW_DEMO_RESTORE_SECRET`** to that same secret. Never put it in a `VITE_*` variable or a URL.
+3. Enable GitHub Actions scheduled workflows. Check a manual workflow dispatch once configured. No scheduled infrastructure or production data is changed by local development.
+
+The endpoint rejects missing/wrong secrets; a demo JWT is not scheduler authorization. A persistent MongoDB timestamp limits scheduler checks to once per hour; the manual `/restore` confirmation is immediate. Each due check hashes indexed reads restricted to the four recorded demo IDs and their owned records. Passwords and sessions are excluded. Unchanged application data is not rewritten; only small lock/check metadata changes. No whole-database scan or unconditional hourly reseed is used. This also catches missing/extra records and out-of-band edits without requiring every mutation to maintain a dirty flag.
+
+One MongoDB lease serializes restoration and demo-affecting mutations across Vercel instances; a simultaneous invocation returns `409` with a retry message. A failed restore keeps the old clean fingerprint, so retry repairs partial writes. An abandoned lease expires after five minutes. Local standalone MongoDB is supported; no transaction/replica-set requirement is introduced.
+
+**Ownership safety:** only the four exact accounts and positively demo-owned records are eligible. Existing task IDs are adopted on first use so references in legacy sprints remain valid. Legacy/global sprints have no owner in the original schema: they are never claimed or overwritten by name; restoration creates its own marked demo sprint instead. A legacy "Demo sprint" can therefore coexist with the managed one. Non-demo-owned tasks assigned to demos remain untouched. If a demo-owned record involves a real user, a real-owned payout involves a demo participant, or deleting an extra demo task would damage an unowned sprint, restoration returns `409` before changing application data. It does not silently delete shared content to force a reset; inspect that ownership conflict rather than running a broad database reset.
 
 ### Frontend project (Root Directory `frontend`)
 

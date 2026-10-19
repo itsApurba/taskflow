@@ -35,6 +35,7 @@ const CreditTransactionSchema = new mongoose.Schema({
 // One ledger entry per task, redemption or penalty, so nothing is paid or charged twice.
 CreditTransactionSchema.index({ kind: 1, ref: 1 }, { unique: true });
 CreditTransactionSchema.index({ user: 1, createdAt: -1 });
+CreditTransactionSchema.index({ ref: 1 });
 
 const CreditTransaction = mongoose.model("CreditTransaction", CreditTransactionSchema);
 CreditTransaction.KINDS = KINDS;
